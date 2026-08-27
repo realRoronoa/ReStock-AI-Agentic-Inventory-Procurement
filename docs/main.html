@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ReStock AI — Procurement, reasoned.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,460;0,9..144,560;0,9..144,650;1,9..144,460;1,9..144,560&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ================= DESIGN TOKENS ================= */
+:root{
+  --paper:#FCFBF7;
+  --paper-alt:#F4F1E9;
+  --paper-deep:#EDE9DD;
+  --panel:#FFFFFF;
+  --line:#E7E2D3;
+  --line-soft:#F0ECE0;
+
+  --ink:#17150F;
+  --ink-soft:#3A362B;
+  --text:#211F17;
+  --text-soft:#6B6656;
+  --text-faint:#9B9584;
+
+  --brand:#243B5C;        /* deep navy — also = AGENT/AI color */
+  --brand-ink:#1A2C46;
+  --brand-soft:#EAEFF6;
+  --brand-line:#CBD8E9;
+
+  --agent:#243B5C;
+  --agent-bg:#EAEFF6;
+  --agent-line:#CBD8E9;
+
+  --human:#9C6A22;
+  --human-bg:#FAF0DC;
+  --human-line:#EAD4A3;
+
+  --system:#1F6E4C;
+  --system-bg:#E7F3EA;
+  --system-line:#C3E0CC;
+
+  --danger:#A83C34;
+  --danger-bg:#FBEBE8;
+  --danger-line:#EFC7C0;
+
+  --gold:#B08A3E;
+
+  --radius-lg:16px;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow-sm:0 1px 2px rgba(23,21,15,0.04), 0 1px 6px rgba(23,21,15,0.03);
+  --shadow-md:0 4px 16px rgba(23,21,15,0.06), 0 1px 3px rgba(23,21,15,0.05);
+  --shadow-lg:0 16px 48px rgba(23,21,15,0.10), 0 4px 12px rgba(23,21,15,0.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:560;margin:0;letter-spacing:-0.015em;color:var(--ink);}
+.serif-italic{font-family:'Fraunces',serif;font-style:italic;font-weight:460;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+button{font-family:inherit;cursor:pointer;}
+a{color:inherit;text-decoration:none;}
+input,select{font-family:inherit;}
+svg{display:block;}
+::selection{background:var(--brand-soft);color:var(--brand-ink);}
+
+/* focus ring accessibility */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+  outline:2.5px solid var(--brand); outline-offset:2px; border-radius:4px;
+}
+
+/* ================= SCREEN SWITCHING ================= */
+.screen{display:none;}
+.screen.visible{display:block;}
+body[data-screen="login"] #screen-login,
+body[data-screen="signup"] #screen-signup,
+body[data-screen="onboarding"] #screen-onboarding,
+body[data-screen="app"] #screen-app{display:block;}
+
+.fade-in{animation:fadeIn .35s cubic-bezier(.2,.7,.3,1);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.fade-in-fast{animation:fadeIn .18s ease;}
+
+/* ================= AUTH LAYOUT (login/signup) ================= */
+.auth-shell{display:flex;min-height:100vh;}
+.auth-brand-panel{
+  width:46%;min-width:420px;background:var(--paper-alt);
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:44px 52px;position:relative;overflow:hidden;
+}
+.auth-brand-panel::before{
+  content:"";position:absolute;right:-120px;top:-120px;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, var(--brand-soft), transparent 70%);opacity:.9;
+}
+.auth-logo{display:flex;align-items:center;gap:10px;position:relative;z-index:2;}
+.logo-mark{
+  width:30px;height:30px;border-radius:8px;background:var(--brand);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(36,59,92,.25);
+}
+.logo-mark svg{width:16px;height:16px;}
+.logo-word{font-family:'Fraunces',serif;font-weight:600;font-size:18px;letter-spacing:-0.01em;color:var(--ink);}
+
+.auth-hero{position:relative;z-index:2;margin-top:auto;margin-bottom:auto;padding:40px 0;}
+.auth-hero .eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-soft);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.auth-hero .eyebrow::before{content:"";width:16px;height:1px;background:var(--gold);}
+.auth-hero h1{font-size:40px;line-height:1.08;font-weight:560;max-width:420px;}
+.auth-hero h1 em{font-style:italic;font-weight:460;color:var(--brand);}
+.auth-hero p{margin-top:16px;color:var(--text-soft);font-size:14.5px;max-width:360px;line-height:1.65;}
+
+.flow-diagram{position:relative;z-index:2;margin-top:36px;display:flex;flex-direction:column;gap:0;}
+.flow-step{display:flex;align-items:flex-start;gap:14px;padding:11px 0;position:relative;}
+.flow-step .num{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-faint);width:20px;flex-shrink:0;padding-top:2px;
+}
+.flow-step .fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.flow-step .flabel{font-size:13.5px;color:var(--ink-soft);font-weight:500;}
+.flow-step .fsub{font-size:12px;color:var(--text-faint);margin-top:1px;}
+.flow-rail{position:absolute;left:38px;top:26px;bottom:-4px;width:1px;background:repeating-linear-gradient(to bottom, var(--line) 0 4px, transparent 4px 8px);}
+.flow-step:last-child .flow-rail{display:none;}
+
+.auth-foot{position:relative;z-index:2;font-size:12px;color:var(--text-faint);}
+
+.auth-form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.auth-card{width:100%;max-width:388px;}
+.auth-card .kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.auth-card h2{font-size:27px;margin-bottom:8px;}
+.auth-card .sub{color:var(--text-soft);font-size:13.5px;margin-bottom:28px;}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+.field-input-wrap{position:relative;}
+.field-input-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-faint);}
+.field input{
+  width:100%;padding:11px 14px 11px 38px;border-radius:9px;border:1.5px solid var(--line);
+  background:var(--panel);font-size:13.5px;color:var(--text);transition:border-color .12s, box-shadow .12s;
+}
+.field input::placeholder{color:var(--text-faint);}
+.field input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3.5px var(--brand-soft);}
+.field-row-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.field-row-between label{margin-bottom:0;}
+.link-sm{font-size:12px;color:var(--brand);font-weight:600;}
+.link-sm:hover{text-decoration:underline;}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 18px;border-radius:9px;
+  font-size:13.5px;font-weight:600;border:1px solid transparent;transition:filter .12s, background .12s, transform .05s, box-shadow .12s;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(36,59,92,.18);}
+.btn-primary:hover{background:var(--brand-ink);}
+.btn-primary:disabled{opacity:.5;cursor:default;}
+.btn-secondary{background:var(--panel);color:var(--text);border-color:var(--line);}
+.btn-secondary:hover{background:var(--paper-alt);border-color:var(--text-faint);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{filter:brightness(1.08);}
+.btn-approve{background:var(--human);color:#fff;box-shadow:0 4px 12px rgba(156,106,34,.22);}
+.btn-approve:hover{filter:brightness(1.06);}
+.btn-ghost{background:transparent;color:var(--text-soft);border-color:var(--line);}
+.btn-ghost:hover{background:var(--paper-alt);}
+.btn-sm{padding:7px 13px;font-size:12.5px;border-radius:8px;}
+.btn-block{width:100%;justify-content:center;}
+.btn svg{width:15px;height:15px;}
+
+.auth-submit{margin-top:22px;}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--text-faint);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--line);}
+.demo-fill{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:9px;
+  border:1.5px dashed var(--brand-line);background:var(--brand-soft);color:var(--brand-ink);font-size:12.5px;font-weight:600;
+}
+.demo-fill:hover{background:#E1E9F3;}
+.auth-switch{text-align:center;margin-top:24px;font-size:13px;color:var(--text-soft);}
+.auth-switch a{color:var(--brand);font-weight:600;}
+.auth-switch a:hover{text-decoration:underline;}
+.terms-note{font-size:11.5px;color:var(--text-faint);margin-top:16px;line-height:1.6;text-align:center;}
+
+/* ================= ONBOARDING ================= */
+.onb-shell{min-height:100vh;display:flex;flex-direction:column;background:var(--paper);}
+.onb-top{
+  display:flex;align-items:center;justify-content:space-between;padding:22px 40px;border-bottom:1px solid var(--line);
+}
+.onb-steps{display:flex;align-items:center;gap:8px;}
+.onb-step-pill{
+  display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text-faint);padding:5px 4px;
+}
+.onb-step-pill .circ{
+  width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:var(--text-faint);transition:all .2s;
+}
+.onb-step-pill.active .circ{border-color:var(--brand);color:var(--brand);background:var(--brand-soft);}
+.onb-step-pill.active{color:var(--ink);}
+.onb-step-pill.done .circ{background:var(--system);border-color:var(--system);color:#fff;}
+.onb-step-rail{width:26px;height:1px;background:var(--line);}
+.onb-skip{font-size:12.5px;color:var(--text-faint);font-weight:600;}
+.onb-skip:hover{color:var(--text-soft);}
+
+.onb-body{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.onb-panel{width:100%;max-width:640px;text-align:center;}
+.onb-panel .eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;
+}
+.onb-panel h2{font-size:32px;margin-bottom:14px;line-height:1.15;}
+.onb-panel .desc{color:var(--text-soft);font-size:14.5px;max-width:460px;margin:0 auto 34px auto;line-height:1.65;}
+
+.onb-diagram{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:38px;flex-wrap:wrap;}
+.onb-node{display:flex;flex-direction:column;align-items:center;gap:10px;width:120px;}
+.onb-node .nicon{
+  width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-sm);border:1px solid var(--line-soft);
+}
+.onb-node .nicon svg{width:24px;height:24px;}
+.onb-node .nlabel{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+.onb-arrow{color:var(--text-faint);width:28px;height:14px;flex-shrink:0;}
+.onb-arrow svg{width:100%;height:100%;}
+
+.connect-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;text-align:left;margin-bottom:24px;}
+.connect-card{
+  border:1.5px solid var(--line);border-radius:var(--radius);padding:16px 18px;background:var(--panel);
+  display:flex;align-items:center;gap:13px;transition:border-color .12s, box-shadow .12s;
+}
+.connect-card:hover{border-color:var(--text-faint);box-shadow:var(--shadow-sm);}
+.connect-card.selected{border-color:var(--brand);background:var(--brand-soft);box-shadow:0 0 0 3px var(--brand-soft);}
+.connect-card .cicon{width:36px;height:36px;border-radius:9px;background:var(--paper-alt);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.connect-card .cicon svg{width:18px;height:18px;}
+.connect-card .ctext{flex:1;}
+.connect-card .cname{font-weight:600;font-size:13.5px;color:var(--ink);}
+.connect-card .cdesc{font-size:11.5px;color:var(--text-faint);margin-top:1px;}
+.connect-card .ccheck{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;}
+.connect-card.selected .ccheck{background:var(--brand);border-color:var(--brand);position:relative;}
+.connect-card.selected .ccheck::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
+
+/* ---- Plan / pricing selector ---- */
+.plan-selector{text-align:left;}
+.plan-toggle{
+  display:flex;align-items:center;gap:2px;background:var(--paper-alt);border:1px solid var(--line);border-radius:30px;
+  padding:3px;width:max-content;margin:0 auto 26px auto;
+}
+.pt-btn{
+  padding:8px 16px;border-radius:24px;font-size:12.5px;font-weight:600;color:var(--text-soft);background:transparent;border:none;
+  display:flex;align-items:center;gap:7px;transition:background .15s,color .15s;
+}
+.pt-btn.active{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm);}
+.pt-save{font-size:10px;font-weight:700;background:var(--system-bg);color:var(--system);padding:1.5px 6px;border-radius:20px;}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.plan-card{
+  position:relative;background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius-lg);padding:22px 20px 20px 20px;
+  display:flex;flex-direction:column;cursor:pointer;transition:border-color .15s, box-shadow .15s, transform .15s;
+}
+.plan-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.plan-card.selected{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
+.plan-card.popular{border-color:var(--human-line);}
+.plan-card.popular.selected{border-color:var(--brand);}
+.plan-ribbon{
+  position:absolute;top:-11px;left:20px;background:var(--human);color:#fff;font-size:10px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:20px;box-shadow:0 2px 6px rgba(156,106,34,.3);
+}
+.plan-name{font-family:'Fraunces',serif;font-size:19px;font-weight:600;color:var(--ink);}
+.plan-tagline{font-size:12px;color:var(--text-faint);margin-top:4px;min-height:32px;line-height:1.5;}
+.plan-price{margin:14px 0 16px 0;display:flex;align-items:baseline;gap:2px;}
+.plan-price .pp-cur{font-size:16px;font-weight:600;color:var(--text-soft);}
+.plan-price .pp-num{font-family:'Fraunces',serif;font-size:32px;font-weight:600;color:var(--ink);}
+.plan-price .pp-per{font-size:12px;color:var(--text-faint);margin-left:3px;}
+.plan-features{list-style:none;margin:0 0 18px 0;padding:0;display:flex;flex-direction:column;gap:9px;flex:1;}
+.plan-features li{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-soft);}
+.plan-features li svg{width:14px;height:14px;color:var(--system);flex-shrink:0;margin-top:1.5px;}
+.plan-select-btn{
+  text-align:center;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:700;border:1.5px solid var(--line);
+  color:var(--text-soft);transition:all .15s;
+}
+.plan-card.selected .plan-select-btn{background:var(--brand);border-color:var(--brand);color:#fff;}
+.plan-card:not(.selected):hover .plan-select-btn{border-color:var(--brand);color:var(--brand);}
+
+/* ---- Billing (in-app) ---- */
+.billing-plan-card{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--brand-soft);
+  border:1px solid var(--brand-line);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:20px;flex-wrap:wrap;
+}
+.billing-plan-card .bp-left{display:flex;align-items:center;gap:14px;}
+.billing-plan-card .bp-icon{width:44px;height:44px;border-radius:12px;background:var(--panel);display:flex;align-items:center;justify-content:center;color:var(--brand);flex-shrink:0;}
+.billing-plan-card .bp-icon svg{width:20px;height:20px;}
+.billing-plan-card .bp-name{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--brand-ink);}
+.billing-plan-card .bp-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+.payment-method-row{
+  display:flex;align-items:center;gap:14px;padding:15px 18px;border:1.5px solid var(--line);border-radius:var(--radius);background:var(--panel);
+}
+.pm-card-icon{width:40px;height:28px;border-radius:5px;background:linear-gradient(135deg,var(--ink),var(--brand));display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
+.pm-card-icon svg{width:16px;height:16px;}
+.pm-details{flex:1;}
+.pm-brand{font-weight:600;font-size:13.5px;}
+.pm-exp{font-size:11.5px;color:var(--text-faint);margin-top:1px;}
+.invoice-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
+.invoice-row:last-child{border-bottom:none;}
+.invoice-row .iv-id{font-family:'IBM Plex Mono',monospace;color:var(--text-soft);font-size:12px;}
+.invoice-row .iv-date{color:var(--text-faint);font-size:12px;}
+.invoice-row .iv-amt{font-weight:600;}
+.invoice-row .iv-dl{color:var(--brand);}
+.invoice-row .iv-dl svg{width:13px;height:13px;}
+
+/* ---- What changed / trend rows ---- */
+.change-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;}
+.change-row:last-child{border-bottom:none;}
+.change-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.change-icon svg{width:15px;height:15px;}
+.change-icon.up{background:var(--system-bg);color:var(--system);}
+.change-icon.down{background:var(--danger-bg);color:var(--danger);}
+.change-icon.warn{background:var(--human-bg);color:var(--human);}
+.change-icon.info{background:var(--agent-bg);color:var(--agent);}
+.change-text{flex:1;color:var(--text);}
+.change-text b{font-weight:600;}
+.change-time{color:var(--text-faint);font-size:11.5px;flex-shrink:0;}
+
+/* ---- Spending ---- */
+.budget-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px 24px;}
+.budget-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.budget-row .bl{font-size:13px;color:var(--text-soft);}
+.budget-row .bv{font-family:'Fraunces',serif;font-size:20px;font-weight:600;}
+.budget-bar-track{height:10px;border-radius:20px;background:var(--paper-alt);overflow:hidden;margin:6px 0 8px 0;}
+.budget-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--brand),#3D5A82);transition:width .4s;}
+.budget-bar-fill.warn{background:linear-gradient(90deg,var(--human),#C88A3A);}
+.budget-note{font-size:12px;color:var(--text-faint);}
+.spend-list-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line-soft);}
+.spend-list-row:last-child{border-bottom:none;}
+.spend-list-row .sl-name{width:130px;flex-shrink:0;font-weight:600;font-size:13.5px;}
+.spend-list-row .sl-bar-track{flex:1;height:8px;border-radius:20px;background:var(--paper-alt);overflow:hidden;}
+.spend-list-row .sl-bar-fill{height:100%;border-radius:20px;background:var(--brand);}
+.spend-list-row .sl-amt{width:90px;text-align:right;flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-soft);}
+
+/* ---- Settings ---- */
+.settings-section{margin-bottom:32px;}
+.settings-section .stitle-lg{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:4px;}
+.settings-section .stitle-sub{font-size:12.5px;color:var(--text-faint);margin-bottom:16px;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line-soft);gap:20px;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row .sr-label{font-weight:600;font-size:13.5px;}
+.settings-row .sr-desc{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.settings-input{padding:8px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:13px;width:160px;text-align:right;}
+.danger-zone{border:1.5px solid var(--danger-line);background:var(--danger-bg);border-radius:var(--radius-lg);padding:18px 20px;}
+
+/* ---- Demo tools / dev-only panels ---- */
+.dev-panel{
+  border:1.5px dashed var(--human-line);background:#FEFBF3;border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:24px;
+}
+.dev-panel .dp-head{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+.dev-panel .dp-head svg{width:15px;height:15px;color:var(--human);}
+.dev-panel .dp-title{font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--human);}
+.dev-panel .dp-desc{font-size:12.5px;color:var(--text-soft);margin-bottom:14px;}
+.dev-form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.dev-form-row .field{margin-bottom:0;flex:1;min-width:140px;}
+.dev-form-row select, .dev-form-row input{
+  width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:13px;background:var(--panel);
+}
+
+/* ---- Error state ---- */
+.error-banner{
+  display:flex;align-items:center;gap:14px;background:var(--danger-bg);border:1px solid var(--danger-line);border-radius:var(--radius-lg);
+  padding:20px 22px;margin-bottom:16px;
+}
+.error-banner .eb-icon{width:38px;height:38px;border-radius:10px;background:var(--panel);color:var(--danger);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.error-banner .eb-icon svg{width:18px;height:18px;}
+.error-banner .eb-text{flex:1;}
+.error-banner .eb-title{font-weight:700;color:var(--danger);font-size:13.5px;}
+.error-banner .eb-desc{font-size:12.5px;color:#7a2c2c;margin-top:2px;}
+
+.pref-list{text-align:left;margin-bottom:24px;}
+.pref-row{
+  display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border:1.5px solid var(--line);
+  border-radius:var(--radius);background:var(--panel);margin-bottom:10px;
+}
+.pref-row .ptitle{font-weight:600;font-size:13.5px;}
+.pref-row .pdesc{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.toggle{width:38px;height:22px;border-radius:20px;background:var(--line);position:relative;flex-shrink:0;transition:background .15s;border:none;}
+.toggle.on{background:var(--brand);}
+.toggle .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s;}
+.toggle.on .knob{left:18px;}
+
+.onb-nav{display:flex;justify-content:center;gap:12px;margin-top:6px;}
+
+/* ================= APP SHELL ================= */
+#shell{display:flex;min-height:100vh;}
+#sidebar{
+  width:232px;flex-shrink:0;background:var(--paper-alt);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:9px;padding:6px 8px 24px 6px;}
+.brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px;color:var(--ink);letter-spacing:-0.01em;}
+
+.nav-group{display:flex;flex-direction:column;gap:2px;margin-top:2px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;
+  color:var(--text-soft);font-size:13.5px;font-weight:500;border:none;background:transparent;
+  text-align:left;width:100%;transition:background .12s, color .12s;
+}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.75;}
+.nav-item:hover{background:var(--line-soft);color:var(--ink);}
+.nav-item.active{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm);}
+.nav-item.active svg{opacity:1;color:var(--brand);}
+.nav-item .badge{margin-left:auto;background:var(--human);color:#fff;font-size:10px;font-weight:700;padding:1.5px 6.5px;border-radius:20px;}
+
+.sidebar-agent-status{
+  margin-top:16px;padding:12px 13px;border-radius:var(--radius);background:var(--panel);border:1px solid var(--line-soft);
+}
+.sas-top{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--ink-soft);}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--system);position:relative;flex-shrink:0;}
+.pulse-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:var(--system);opacity:.35;animation:pulseRing 2s infinite;}
+@keyframes pulseRing{0%{transform:scale(.6);opacity:.5;}100%{transform:scale(1.8);opacity:0;}}
+.sas-sub{font-size:11px;color:var(--text-faint);margin-top:4px;line-height:1.5;}
+
+.sidebar-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);}
+.user-chip{display:flex;align-items:center;gap:9px;padding:8px;border-radius:9px;position:relative;}
+.user-chip:hover{background:var(--line-soft);cursor:pointer;}
+.avatar{
+  width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),#3D5A82);
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.user-chip .uname{font-size:12.5px;font-weight:600;color:var(--ink);}
+.user-chip .urole{font-size:11px;color:var(--text-faint);}
+.user-menu{
+  position:absolute;bottom:52px;left:0;right:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-lg);padding:6px;display:none;z-index:60;
+}
+.user-menu.open{display:block;}
+.user-menu button{
+  width:100%;text-align:left;padding:9px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--text-soft);
+  background:transparent;border:none;display:flex;align-items:center;gap:9px;
+}
+.user-menu button:hover{background:var(--paper-alt);color:var(--ink);}
+.user-menu button svg{width:15px;height:15px;}
+
+#main{flex:1;min-width:0;display:flex;flex-direction:column;}
+#topbar{
+  height:64px;flex-shrink:0;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:0 30px;
+  background:rgba(252,251,247,0.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20;
+}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.crumb{font-size:13px;color:var(--text-faint);font-weight:500;}
+.crumb b{color:var(--ink);font-weight:600;}
+.demo-pill{
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--gold);
+  background:#FBF4E4;border:1px solid #ECDBAF;padding:3px 9px;border-radius:20px;text-transform:uppercase;
+}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.icon-btn{
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel);display:flex;
+  align-items:center;justify-content:center;color:var(--text-soft);
+}
+.icon-btn:hover{background:var(--paper-alt);color:var(--ink);}
+.icon-btn svg{width:16px;height:16px;}
+
+#content{flex:1;padding:30px 34px 60px 34px;max-width:1200px;width:100%;margin:0 auto;}
+
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap;}
+.page-header h1{font-size:25px;}
+.page-sub{color:var(--text-soft);font-size:13.5px;margin-top:5px;}
+
+/* ================= SECTIONS / STAT CARDS ================= */
+.section-label{
+  font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint);
+  margin:32px 0 13px 0;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+.section-label:first-child{margin-top:0;}
+
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.stat-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);
+  transition:box-shadow .15s, transform .15s;position:relative;overflow:hidden;
+}
+.stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.stat-card .top-row{display:flex;justify-content:space-between;align-items:flex-start;}
+.stat-card .label{font-size:12px;color:var(--text-soft);font-weight:500;}
+.stat-card .sicon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.stat-card .sicon svg{width:14px;height:14px;}
+.stat-card .value{font-family:'Fraunces',serif;font-size:32px;font-weight:560;margin-top:10px;}
+.stat-card.accent-human .sicon{background:var(--human-bg);color:var(--human);}
+.stat-card.accent-agent .sicon{background:var(--agent-bg);color:var(--agent);}
+.stat-card.accent-system .sicon{background:var(--system-bg);color:var(--system);}
+.stat-card .trend{font-size:11px;color:var(--text-faint);margin-top:6px;}
+
+.attention-card{
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--human);
+  border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm);margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  transition:box-shadow .15s;
+}
+.attention-card:hover{box-shadow:var(--shadow-md);}
+.attention-card .info{flex:1;min-width:220px;display:flex;align-items:center;gap:14px;}
+.attn-icon{width:40px;height:40px;border-radius:11px;background:var(--human-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--human);}
+.attn-icon svg{width:19px;height:19px;}
+.attention-card .title{font-weight:600;font-size:14.5px;}
+.attention-card .meta{color:var(--text-soft);font-size:12.5px;margin-top:4px;}
+.attention-card .meta .mono{color:var(--text);}
+.status-chip{
+  font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:20px;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.status-chip::before{content:"";width:5px;height:5px;border-radius:50%;}
+.status-chip.low{background:var(--danger-bg);color:var(--danger);}
+.status-chip.low::before{background:var(--danger);}
+.status-chip.healthy{background:var(--system-bg);color:var(--system);}
+.status-chip.healthy::before{background:var(--system);}
+.status-chip.proposed{background:var(--human-bg);color:var(--human);}
+.status-chip.proposed::before{background:var(--human);}
+.status-chip.approved{background:var(--agent-bg);color:var(--agent);}
+.status-chip.approved::before{background:var(--agent);}
+.status-chip.paid{background:var(--system-bg);color:var(--system);}
+.status-chip.paid::before{background:var(--system);}
+.status-chip.failed{background:var(--danger-bg);color:var(--danger);}
+.status-chip.failed::before{background:var(--danger);}
+.status-chip.reversed{background:var(--paper-deep);color:var(--text-soft);}
+.status-chip.reversed::before{background:var(--text-faint);}
+
+.empty-state{
+  border:1.5px dashed var(--line);border-radius:var(--radius-lg);padding:44px 20px;text-align:center;color:var(--text-soft);
+  background:var(--panel);
+}
+.empty-state .glyph{
+  width:44px;height:44px;border-radius:12px;background:var(--system-bg);color:var(--system);margin:0 auto 14px auto;
+  display:flex;align-items:center;justify-content:center;
+}
+.empty-state .glyph svg{width:20px;height:20px;}
+.empty-state .h{font-weight:600;color:var(--ink);margin-bottom:5px;font-size:14.5px;font-family:'Fraunces',serif;}
+
+.activity-feed{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:4px 20px;}
+.activity-row{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
+.activity-row:last-child{border-bottom:none;}
+.activity-row .adot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.activity-row .atext{flex:1;color:var(--text);}
+.activity-row .atag{font-size:9.5px;font-weight:700;letter-spacing:.04em;color:var(--text-faint);}
+.activity-row .atime{color:var(--text-faint);font-size:11.5px;flex-shrink:0;}
+
+/* ================= TABLE ================= */
+.table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead th{
+  text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);
+  padding:13px 18px;border-bottom:1px solid var(--line);background:var(--paper-alt);
+}
+tbody td{padding:14px 18px;border-bottom:1px solid var(--line-soft);font-size:13.5px;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr.clickable{cursor:pointer;transition:background .1s;}
+tbody tr.clickable:hover{background:var(--paper-alt);}
+.cell-strong{font-weight:600;}
+.cell-link{color:var(--brand);font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:4px;}
+.cell-link svg{width:12px;height:12px;}
+.spark{display:inline-block;vertical-align:middle;margin-left:8px;}
+
+.toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.search-input-wrap{position:relative;flex:1;min-width:200px;}
+.search-input-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-faint);}
+.search-input{
+  width:100%;padding:9px 13px 9px 34px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel);
+  font-size:13px;color:var(--text);
+}
+.search-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
+.select-input{padding:9px 13px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel);font-size:13px;color:var(--text);}
+
+/* ================= PRODUCT DETAIL ================= */
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-soft);font-size:12.5px;font-weight:600;margin-bottom:18px;}
+.back-link svg{width:13px;height:13px;}
+.back-link:hover{color:var(--ink);}
+.detail-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start;}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px 24px;}
+.kv-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;}
+.kv-row:last-child{border-bottom:none;}
+.kv-row .k{color:var(--text-soft);}
+.kv-row .v{font-weight:600;}
+.supplier-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px;}
+.supplier-row:last-child{border-bottom:none;}
+.supplier-row .name{font-weight:600;}
+.supplier-row .terms{color:var(--text-soft);font-size:12.5px;}
+
+/* ================= PROPOSAL DOCUMENT (dossier) ================= */
+.doc{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);overflow:hidden;}
+.doc-banner{
+  background:var(--human-bg);border-bottom:1px solid var(--human-line);padding:15px 28px;
+  display:flex;align-items:center;gap:11px;color:var(--human);font-weight:600;font-size:13.5px;
+}
+.doc-banner svg{width:17px;height:17px;flex-shrink:0;}
+.doc-body{padding:30px 30px 28px 30px;}
+.doc-section{margin-bottom:28px;}
+.doc-section:last-child{margin-bottom:0;}
+.doc-section .stitle{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+.product-box{background:var(--paper-alt);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;}
+.product-box .pmark{width:44px;height:44px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--brand);}
+.product-box .pmark svg{width:20px;height:20px;}
+.product-box .pname{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-bottom:4px;}
+.product-box .prow{font-size:13px;color:var(--text-soft);}
+.forecast-num{text-align:center;padding:22px 0 14px 0;}
+.forecast-num .n{font-family:'Fraunces',serif;font-size:52px;font-weight:600;color:var(--agent);line-height:1;}
+.forecast-num .u{font-size:12px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;margin-top:6px;}
+.reason-box{
+  background:var(--agent-bg);border:1px solid var(--agent-line);border-radius:var(--radius);
+  padding:16px 18px;font-size:14px;color:var(--ink-soft);line-height:1.65;font-family:'Fraunces',serif;font-style:italic;font-weight:460;
+}
+.reason-box.plain{background:var(--panel);border-color:var(--system-line);font-family:'Inter',sans-serif;font-style:normal;font-weight:400;font-size:13.5px;}
+.why-label{font-size:11.5px;font-weight:700;color:var(--text-soft);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;}
+.supplier-pick{
+  border:1px solid var(--system-line);background:var(--system-bg);border-radius:var(--radius);padding:18px 20px;
+}
+.supplier-pick .head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--system);}
+.supplier-pick .head svg{width:16px;height:16px;}
+.supplier-pick .terms{color:var(--text-soft);font-size:13px;margin:6px 0 14px 0;}
+.divider{height:1px;background:var(--line);margin:24px 0;}
+.order-summary-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--text-soft);}
+.order-summary-row b{color:var(--text);font-weight:600;}
+.order-summary-row.total{font-weight:700;font-size:17px;padding-top:14px;margin-top:6px;border-top:1px solid var(--line);color:var(--ink);}
+.order-summary-row.total .mono{font-family:'Fraunces',serif;font-style:normal;font-weight:600;}
+.approval-notice{
+  display:flex;gap:13px;align-items:flex-start;background:var(--human-bg);border:1px solid var(--human-line);
+  border-radius:var(--radius);padding:16px 18px;margin:20px 0;
+}
+.approval-notice .glyph{color:var(--human);flex-shrink:0;}
+.approval-notice .glyph svg{width:19px;height:19px;}
+.approval-notice .t{font-weight:700;color:var(--human);font-size:13.5px;margin-bottom:3px;}
+.approval-notice .d{font-size:12.5px;color:var(--ink-soft);}
+.action-row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+
+/* ================= MODAL ================= */
+.overlay{
+  position:fixed;inset:0;background:rgba(23,21,15,.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+}
+.modal{background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:440px;overflow:hidden;}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--line);}
+.modal-head h3{font-size:18px;}
+.modal-body{padding:22px 24px;}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:var(--paper-alt);}
+.confirm-line{display:flex;justify-content:space-between;padding:7px 0;font-size:13.5px;}
+.confirm-line .k{color:var(--text-soft);}
+.confirm-line .v{font-weight:600;}
+.confirm-note{font-size:12.5px;color:var(--text-soft);background:var(--paper-alt);border-radius:var(--radius-sm);padding:13px 15px;margin:15px 0;line-height:1.6;}
+.confirm-note strong{color:var(--text);}
+
+.progress-steps{padding:8px 0;}
+.progress-step{display:flex;align-items:center;gap:11px;padding:10px 0;font-size:13.5px;color:var(--text-faint);opacity:.4;transition:opacity .2s;}
+.progress-step.active{opacity:1;color:var(--text);}
+.progress-step.done{opacity:1;color:var(--system);}
+.progress-step .mark{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.progress-step.active .mark{border-color:var(--agent);}
+.progress-step.active .mark::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--agent);animation:pulse 1s infinite;}
+.progress-step.done .mark{border-color:var(--system);background:var(--system);color:#fff;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ================= PAYMENT STATUS ================= */
+.checklist{margin-top:8px;}
+.check-row{display:flex;align-items:center;gap:11px;padding:10px 0;font-size:13.5px;border-bottom:1px solid var(--line-soft);}
+.check-row:last-child{border-bottom:none;}
+.check-row .mark{width:19px;height:19px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.check-row .mark svg{width:11px;height:11px;}
+.check-row.done .mark{background:var(--system);color:#fff;}
+.check-row.waiting .mark{background:var(--paper-alt);border:2px solid var(--line);color:transparent;}
+.check-row.waiting .label{color:var(--text-soft);}
+.check-row.failed .mark{background:var(--danger);color:#fff;}
+
+.payout-id{margin-top:16px;background:var(--paper-alt);border-radius:var(--radius-sm);padding:13px 15px;}
+.payout-id .l{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.payout-id .v{font-family:'IBM Plex Mono',monospace;font-size:13px;}
+
+.fail-banner{
+  display:flex;gap:13px;background:var(--danger-bg);border:1px solid var(--danger-line);border-radius:var(--radius);
+  padding:16px 18px;color:var(--danger);align-items:flex-start;
+}
+.fail-banner svg{width:18px;height:18px;flex-shrink:0;}
+.fail-banner .t{font-weight:700;font-size:13.5px;margin-bottom:3px;}
+.fail-banner .d{font-size:12.5px;color:#7a2c2c;}
+
+/* ================= AUDIT TIMELINE ================= */
+.timeline{position:relative;padding-left:6px;}
+.tl-item{display:flex;gap:16px;position:relative;padding-bottom:26px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-item .rail{position:relative;display:flex;flex-direction:column;align-items:center;width:16px;flex-shrink:0;}
+.tl-item .rail .node{width:12px;height:12px;border-radius:50%;z-index:1;margin-top:4px;border:2.5px solid var(--paper);box-shadow:0 0 0 1.5px currentColor;}
+.tl-item .rail .line{position:absolute;top:18px;bottom:-26px;width:1.5px;background:var(--line);}
+.tl-item:last-child .rail .line{display:none;}
+.tl-item.actor-agent .node{background:var(--agent);color:var(--agent);}
+.tl-item.actor-human .node{background:var(--human);color:var(--human);}
+.tl-item.actor-system .node{background:var(--system);color:var(--system);}
+.tl-content{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 17px;cursor:pointer;transition:border-color .12s, box-shadow .12s;}
+.tl-content:hover{border-color:var(--text-faint);box-shadow:var(--shadow-sm);}
+.tl-top{display:flex;align-items:center;gap:9px;margin-bottom:7px;flex-wrap:wrap;}
+.actor-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2.5px 8px;border-radius:20px;}
+.actor-tag.agent{background:var(--agent-bg);color:var(--agent);}
+.actor-tag.human{background:var(--human-bg);color:var(--human);}
+.actor-tag.system{background:var(--system-bg);color:var(--system);}
+.tl-time{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-faint);}
+.tl-title{font-weight:700;font-size:13.5px;margin-bottom:4px;}
+.tl-desc{font-size:13px;color:var(--text-soft);}
+.tl-reason{margin-top:9px;font-size:13px;color:var(--ink-soft);background:var(--paper-alt);border-radius:7px;padding:10px 12px;line-height:1.6;font-family:'Fraunces',serif;font-style:italic;}
+
+/* ================= PROPOSAL / ORDER CARDS ================= */
+.prop-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:20px 22px;margin-bottom:14px;transition:box-shadow .15s;}
+.prop-card:hover{box-shadow:var(--shadow-md);}
+.prop-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.prop-card h3{font-size:17px;margin-bottom:10px;}
+.prop-card .fields{display:grid;grid-template-columns:repeat(2,1fr);gap:7px 22px;font-size:13px;color:var(--text-soft);margin-bottom:12px;}
+.prop-card .fields b{color:var(--text);font-weight:600;}
+.prop-card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+
+/* ================= LOADING / TOAST ================= */
+.loading-block{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;color:var(--text-soft);gap:16px;}
+.spinner{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--brand);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:13.5px;font-weight:500;min-height:20px;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:12px 22px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);
+  z-index:200;opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;display:flex;align-items:center;gap:9px;
+}
+.toast svg{width:14px;height:14px;color:var(--system);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+@media (max-width:1000px){
+  .auth-brand-panel{display:none;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .detail-grid{grid-template-columns:1fr;}
+  #sidebar{position:fixed;left:-232px;z-index:50;transition:left .18s;}
+  #sidebar.open{left:0;}
+  .prop-card .fields{grid-template-columns:1fr;}
+  .connect-grid{grid-template-columns:1fr;}
+  .onb-diagram{gap:6px;}
+}
+</style>
+</head>
+<body data-screen="login">
+
+<!-- ============================================================= -->
+<!-- SCREEN: LOGIN -->
+<!-- ============================================================= -->
+<div class="screen" id="screen-login">
+  <div class="auth-shell">
+    <div class="auth-brand-panel">
+      <div class="auth-logo"><div class="logo-mark" id="logoMarkLogin"></div><span class="logo-word">ReStock AI</span></div>
+      <div class="auth-hero">
+        <div class="eyebrow">AI-powered procurement</div>
+        <h1>Procurement,<br><em>reasoned</em>.</h1>
+        <p>Your inventory is watched continuously. Every reorder is reasoned through, priced, and compared — but only you can authorize the spend.</p>
+        <div class="flow-diagram" id="flowDiagramLogin"></div>
+      </div>
+      <div class="auth-foot">© 2026 ReStock AI · Merchant workspace</div>
+    </div>
+    <div class="auth-form-panel">
+      <div class="auth-card fade-in">
+        <div class="kicker">Welcome back</div>
+        <h2>Sign in to your workspace</h2>
+        <div class="sub">Enter your details to continue to your dashboard.</div>
+        <form id="loginForm">
+          <div class="field">
+            <label>Email address</label>
+            <div class="field-input-wrap" id="loginEmailIconWrap"></div>
+          </div>
+          <div class="field-row-between">
+            <label>Password</label>
+            <a class="link-sm" href="#" tabindex="-1">Forgot password?</a>
+          </div>
+          <div class="field-input-wrap" id="loginPassIconWrap"></div>
+          <div class="auth-submit">
+            <button type="submit" class="btn btn-primary btn-block" id="btnLoginSubmit">Sign in <span id="loginIconArrow"></span></button>
+          </div>
+        </form>
+        <div class="auth-divider">or</div>
+        <button class="demo-fill" id="btnDemoFill" type="button"><span id="demoIconSpark"></span> Use demo account</button>
+        <div class="auth-switch">Don't have a workspace? <a href="#" id="goToSignup">Create one</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN: SIGNUP -->
+<!-- ============================================================= -->
+<div class="screen" id="screen-signup">
+  <div class="auth-shell">
+    <div class="auth-brand-panel">
+      <div class="auth-logo"><div class="logo-mark" id="logoMarkSignup"></div><span class="logo-word">ReStock AI</span></div>
+      <div class="auth-hero">
+        <div class="eyebrow">Set up in minutes</div>
+        <h1>The agent<br>never <em>spends</em><br>alone.</h1>
+        <p>Every recommendation carries its reasoning — the demand forecast, the supplier trade-off, the cost — so approval is a decision, not a leap of faith.</p>
+      </div>
+      <div class="auth-foot">© 2026 ReStock AI · Merchant workspace</div>
+    </div>
+    <div class="auth-form-panel">
+      <div class="auth-card fade-in">
+        <div class="kicker">Get started</div>
+        <h2>Create your workspace</h2>
+        <div class="sub">Takes about a minute. No card required for the demo.</div>
+        <form id="signupForm">
+          <div class="field">
+            <label>Business name</label>
+            <div class="field-input-wrap" id="signupBizIconWrap"></div>
+          </div>
+          <div class="field">
+            <label>Work email</label>
+            <div class="field-input-wrap" id="signupEmailIconWrap"></div>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <div class="field-input-wrap" id="signupPassIconWrap"></div>
+          </div>
+          <div class="auth-submit">
+            <button type="submit" class="btn btn-primary btn-block">Create workspace <span id="signupIconArrow"></span></button>
+          </div>
+        </form>
+        <div class="terms-note">By continuing you agree to the Terms of Service and Privacy Policy.</div>
+        <div class="auth-switch">Already have a workspace? <a href="#" id="goToLogin">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN: ONBOARDING -->
+<!-- ============================================================= -->
+<div class="screen" id="screen-onboarding">
+  <div class="onb-shell">
+    <div class="onb-top">
+      <div class="auth-logo"><div class="logo-mark" id="logoMarkOnb" style="width:26px;height:26px;"></div><span class="logo-word" style="font-size:15.5px;">ReStock AI</span></div>
+      <div class="onb-steps" id="onbSteps"></div>
+      <a href="#" class="onb-skip" id="btnSkipOnb">Skip setup →</a>
+    </div>
+    <div class="onb-body" id="onbBody"></div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN: APP -->
+<!-- ============================================================= -->
+<div class="screen" id="screen-app">
+  <div id="shell">
+    <aside id="sidebar">
+      <div class="brand"><div class="logo-mark" id="logoMarkApp"></div><div class="brand-name">ReStock AI</div></div>
+      <div class="nav-group" id="navGroup"></div>
+      <div class="sidebar-agent-status">
+        <div class="sas-top"><span class="pulse-dot"></span> Agent active</div>
+        <div class="sas-sub">Watching 4 products across 1 store. Next scan in 12m.</div>
+      </div>
+      <div class="sidebar-foot">
+        <div class="user-chip" id="userChip">
+          <div class="avatar">MC</div>
+          <div style="flex:1;min-width:0;">
+            <div class="uname">Meera Chandran</div>
+            <div class="urole" id="sidebarPlanLabel">Growth plan</div>
+          </div>
+          <div id="userMenu" class="user-menu">
+            <button id="btnBilling"></button>
+            <button id="btnLogout"></button>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <div id="main">
+      <div id="topbar">
+        <div class="topbar-left"><span class="crumb" id="crumb">Dashboard</span></div>
+        <div class="topbar-right">
+          <span class="demo-pill">Demo · mock data</span>
+          <button class="icon-btn" id="topSearchBtn"></button>
+        </div>
+      </div>
+      <div id="content"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   ReStock AI — front-end prototype (v2, premium editorial redesign)
+   All data is MOCK DATA for UI/UX demonstration only. In production, the
+   auth screens would call real auth endpoints, onboarding would call setup
+   endpoints, and the dashboard data layer below would be replaced with:
+     GET  /api/products          POST /api/inventory/check
+     POST /api/proposals/product/{id}   GET /api/orders
+     POST /api/orders/{id}/approve      GET /api/audit
+   The frontend never performs spend validation or payment authorization —
+   that boundary is simulated here via an explicit human-approval modal
+   before any order is marked APPROVED, and PAID is only ever set after a
+   simulated webhook confirmation step (never immediately on approval).
+   ========================================================================= */
+
+// ---------------- Icon library (hand-built, minimal stroke set) ----------------
+const ICO = {
+  grid:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+  box:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`,
+  fileCheck:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9.5 14.5l2 2 3.5-4"/></svg>`,
+  receipt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></svg>`,
+  clock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+  alert:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
+  arrowRight:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
+  arrowLeft:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>`,
+  search:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`,
+  logout:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>`,
+  user:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>`,
+  mail:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>`,
+  lock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
+  building:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/></svg>`,
+  sparkles:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/></svg>`,
+  upload:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>`,
+  database:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>`,
+  cart:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.5 3h2l2.6 12.6a2 2 0 0 0 2 1.6h8a2 2 0 0 0 2-1.7L21 8H6"/></svg>`,
+  truck:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="11"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.7"/><circle cx="17.5" cy="19" r="1.7"/></svg>`,
+  brain:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3a3 3 0 0 0-3 3v1a3 3 0 0 0-2 5 3 3 0 0 0 2 5v1a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M15 3a3 3 0 0 1 3 3v1a3 3 0 0 1 2 5 3 3 0 0 1-2 5v1a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/></svg>`,
+  handshake:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12l4-4 4 2 3-3 3 1 6 5"/><path d="M8 10l5 5 3-2"/><path d="M13 15l2 2 3-2"/></svg>`,
+  bank:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M4 10v9M9 10v9M15 10v9M20 10v9"/><path d="M2 21h20"/></svg>`,
+  sliders:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><circle cx="4" cy="13" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg>`,
+  csv:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h1M9 16h1M13 13h2M13 16h2"/></svg>`,
+  shopify:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l1-3h10l1 3"/><path d="M6 8h12l1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg>`,
+  square:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>`,
+  creditCard:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>`,
+  shield:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>`,
+  download:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>`,
+  crown:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4 3 5-6 5 6 4-3-2 10H5z"/></svg>`,
+  x:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`,
+  wallet:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"/><path d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1h-4a2 2 0 1 0 0 4"/></svg>`,
+  refresh:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`,
+  trendUp:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>`,
+  trendDown:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/></svg>`,
+  beaker:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 15h9"/></svg>`,
+  wifiOff:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M16.7 16.7a6 6 0 0 0-8.4 0"/><path d="M5 12.5a11 11 0 0 1 3.5-2.3M19 12.5a11 11 0 0 0-3-2.1"/><path d="M8.5 8.5a15 15 0 0 1 3-1"/><path d="M12 20h.01"/></svg>`,
+};
+function icon(name, extra){ return `<span class="ic" style="${extra||''}">${ICO[name]||''}</span>`; }
+
+// ---------------- Screen state machine ----------------
+function setScreen(s){ document.body.setAttribute("data-screen", s); window.scrollTo(0,0); }
+
+// mount static icons that live outside the render() cycle
+function mountStaticIcons(){
+  document.getElementById("logoMarkLogin").innerHTML = ICO.sparkles.replace('currentColor','white');
+  document.getElementById("logoMarkSignup").innerHTML = ICO.sparkles.replace('currentColor','white');
+  document.getElementById("logoMarkOnb").innerHTML = ICO.sparkles.replace('currentColor','white');
+  document.getElementById("logoMarkApp").innerHTML = ICO.sparkles.replace('currentColor','white');
+  document.getElementById("loginEmailIconWrap").innerHTML = ICO.mail + `<input type="email" placeholder="you@business.com" id="loginEmail" value="merchant@restockai.com"/>`;
+  document.getElementById("loginPassIconWrap").innerHTML = ICO.lock + `<input type="password" placeholder="••••••••" id="loginPass" value="demo1234"/>`;
+  document.getElementById("loginIconArrow").innerHTML = ICO.arrowRight;
+  document.getElementById("demoIconSpark").innerHTML = ICO.sparkles;
+  document.getElementById("signupBizIconWrap").innerHTML = ICO.building + `<input type="text" placeholder="Chennai Central Store" id="signupBiz"/>`;
+  document.getElementById("signupEmailIconWrap").innerHTML = ICO.mail + `<input type="email" placeholder="you@business.com" id="signupEmail"/>`;
+  document.getElementById("signupPassIconWrap").innerHTML = ICO.lock + `<input type="password" placeholder="Create a password" id="signupPass"/>`;
+  document.getElementById("signupIconArrow").innerHTML = ICO.arrowRight;
+  document.getElementById("topSearchBtn").innerHTML = ICO.search;
+  document.getElementById("btnLogout").innerHTML = ICO.logout + " Log out";
+  document.getElementById("btnBilling").innerHTML = ICO.creditCard + " Billing & plan";
+
+  // flow diagram on login panel
+  const steps = [
+    {label:"Low stock detected", sub:"Agent scans inventory", color:"var(--danger)"},
+    {label:"Forecast & supplier compared", sub:"Reasoning generated", color:"var(--agent)"},
+    {label:"You approve", sub:"Human authorization", color:"var(--human)"},
+    {label:"Payout confirmed", sub:"Inventory updated", color:"var(--system)"},
+  ];
+  document.getElementById("flowDiagramLogin").innerHTML = steps.map((s,i)=>`
+    <div class="flow-step">
+      ${i<steps.length-1 ? '<div class="flow-rail"></div>' : ''}
+      <span class="num">0${i+1}</span>
+      <span class="fdot" style="background:${s.color}"></span>
+      <div><div class="flabel">${s.label}</div><div class="fsub">${s.sub}</div></div>
+    </div>`).join("");
+}
+
+// ---------------- Auth handlers ----------------
+document.getElementById("goToSignup").addEventListener("click", (e)=>{e.preventDefault(); setScreen("signup");});
+document.getElementById("goToLogin").addEventListener("click", (e)=>{e.preventDefault(); setScreen("login");});
+document.getElementById("btnDemoFill").addEventListener("click", ()=>{
+  document.getElementById("loginEmail").value = "merchant@restockai.com";
+  document.getElementById("loginPass").value = "demo1234";
+  showToast("Demo credentials filled");
+});
+document.getElementById("loginForm").addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById("btnLoginSubmit");
+  btn.disabled = true; btn.innerHTML = "Signing in…";
+  setTimeout(()=>{ startApp(); }, 700);
+});
+document.getElementById("signupForm").addEventListener("submit", (e)=>{
+  e.preventDefault();
+  const biz = document.getElementById("signupBiz").value.trim();
+  if(biz){ merchantName = biz; }
+  startOnboarding();
+});
+
+function startApp(){
+  setScreen("app");
+  updateSidebarPlanLabel();
+  render();
+}
+
+// ---------------- Plans (shared by onboarding + billing) ----------------
+const PLANS = [
+  {key:"starter", name:"Starter", tagline:"For a single store finding its footing.", priceMonthly:0, priceAnnual:0,
+   cta:"Start free", highlight:false, icon:"box",
+   features:["Up to 25 tracked products","Manual inventory checks","AI proposals with reasoning","Email support"]},
+  {key:"growth", name:"Growth", tagline:"For stores ready to automate reordering.", priceMonthly:2499, priceAnnual:1999,
+   cta:"Choose Growth", highlight:true, icon:"sparkles",
+   features:["Up to 250 tracked products","Automatic daily inventory checks","Multi-supplier comparison","RazorpayX payouts & full audit trail","Priority support"]},
+  {key:"scale", name:"Scale", tagline:"For multi-location merchants at volume.", priceMonthly:6999, priceAnnual:5499,
+   cta:"Choose Scale", highlight:false, icon:"crown",
+   features:["Unlimited products & locations","Custom approval workflows","Dedicated account manager","API access","SLA-backed support"]},
+];
+let selectedPlan = "growth";
+let billingCycle = "annual";
+
+function planToggleHTML(){
+  return `<div class="plan-toggle">
+    <button class="pt-btn ${billingCycle==='monthly'?'active':''}" data-cycle="monthly">Monthly</button>
+    <button class="pt-btn ${billingCycle==='annual'?'active':''}" data-cycle="annual">Annual <span class="pt-save">Save 20%</span></button>
+  </div>`;
+}
+function planCardHTML(p){
+  const price = billingCycle==='annual' ? p.priceAnnual : p.priceMonthly;
+  const selected = p.key === selectedPlan;
+  return `<div class="plan-card ${selected?'selected':''} ${p.highlight?'popular':''}" data-plan="${p.key}">
+    ${p.highlight?'<div class="plan-ribbon">Most popular</div>':''}
+    <div class="plan-name">${p.name}</div>
+    <div class="plan-tagline">${p.tagline}</div>
+    <div class="plan-price">${price===0?'<span class="pp-num">Free</span>':`<span class="pp-cur">₹</span><span class="pp-num">${price.toLocaleString('en-IN')}</span><span class="pp-per">/mo</span>`}</div>
+    <ul class="plan-features">${p.features.map(f=>`<li>${ICO.check}<span>${f}</span></li>`).join("")}</ul>
+    <div class="plan-select-btn">${selected?'Selected':p.cta}</div>
+  </div>`;
+}
+function renderPlanSelector(){
+  return `<div class="plan-selector">${planToggleHTML()}<div class="plan-grid">${PLANS.map(planCardHTML).join("")}</div></div>`;
+}
+function bindPlanSelector(root, onChange){
+  root.querySelectorAll("[data-cycle]").forEach(b=>b.addEventListener("click", ()=>{ billingCycle = b.dataset.cycle; onChange(); }));
+  root.querySelectorAll("[data-plan]").forEach(c=>c.addEventListener("click", ()=>{ selectedPlan = c.dataset.plan; onChange(); }));
+}
+
+// ---------------- Onboarding ----------------
+let merchantName = "Chennai Central Store";
+let onbStep = 0;
+let onbConnectSelected = null;
+let onbPrefs = {autoCheck:true, requireApproval:true, notify:false};
+const ONB_STEPS = ["Welcome","Plan","Connect data","Preferences"];
+
+function renderOnbSteps(){
+  document.getElementById("onbSteps").innerHTML = ONB_STEPS.map((s,i)=>`
+    <div class="onb-step-pill ${i===onbStep?'active':''} ${i<onbStep?'done':''}">
+      <span class="circ">${i<onbStep?'✓':i+1}</span><span>${s}</span>
+    </div>
+    ${i<ONB_STEPS.length-1?'<div class="onb-step-rail"></div>':''}
+  `).join("");
+}
+
+function startOnboarding(){
+  onbStep = 0;
+  setScreen("onboarding");
+  renderOnboardingBody();
+}
+document.getElementById("btnSkipOnb").addEventListener("click",(e)=>{e.preventDefault(); startApp();});
+
+function renderOnboardingBody(){
+  renderOnbSteps();
+  const body = document.getElementById("onbBody");
+  if(onbStep===0){
+    body.innerHTML = `
+    <div class="onb-panel fade-in">
+      <div class="eyebrow">Welcome, ${merchantName}</div>
+      <h2>Here's how ReStock AI works</h2>
+      <div class="desc">The agent watches your inventory, reasons about what to reorder and from whom, and prepares the decision — you stay the only one who can spend.</div>
+      <div class="onb-diagram">
+        ${[["box","Low stock detected","var(--danger-bg)","var(--danger)"],["brain","AI reasons & recommends","var(--agent-bg)","var(--agent)"],["handshake","You approve","var(--human-bg)","var(--human)"],["bank","Payout & inventory update","var(--system-bg)","var(--system)"]]
+          .map((n,i,arr)=>`
+            <div class="onb-node"><div class="nicon" style="background:${n[2]};color:${n[3]}">${ICO[n[0]]}</div><div class="nlabel">${n[1]}</div></div>
+            ${i<arr.length-1?`<div class="onb-arrow">${ICO.arrowRight}</div>`:''}
+          `).join("")}
+      </div>
+      <div class="onb-nav"><button class="btn btn-primary" id="onbNext0">Get started ${''}<span style="margin-left:6px;">${ICO.arrowRight}</span></button></div>
+    </div>`;
+    document.getElementById("onbNext0").addEventListener("click", ()=>{ onbStep=1; renderOnboardingBody(); });
+  } else if(onbStep===1){
+    body.innerHTML = `
+    <div class="onb-panel fade-in" style="max-width:820px;">
+      <div class="eyebrow">Step 2 of 4</div>
+      <h2>Choose your plan</h2>
+      <div class="desc">Start on Growth, or pick what fits. You can change plans anytime from Billing.</div>
+      ${renderPlanSelector()}
+      <div class="onb-nav">
+        <button class="btn btn-secondary" id="onbBack1">${ICO.arrowLeft} Back</button>
+        <button class="btn btn-primary" id="onbNext1">Continue with ${PLANS.find(p=>p.key===selectedPlan).name} ${ICO.arrowRight}</button>
+      </div>
+    </div>`;
+    bindPlanSelector(body, renderOnboardingBody);
+    document.getElementById("onbBack1").addEventListener("click", ()=>{ onbStep=0; renderOnboardingBody(); });
+    document.getElementById("onbNext1").addEventListener("click", ()=>{ onbStep=2; renderOnboardingBody(); });
+  } else if(onbStep===2){
+    const sources = [
+      {key:"shopify", name:"Shopify", desc:"Sync products & sales", icon:"shopify"},
+      {key:"square", name:"Square POS", desc:"Sync in-store sales", icon:"square"},
+      {key:"csv", name:"Upload CSV", desc:"Import a stock sheet", icon:"csv"},
+      {key:"sample", name:"Use sample data", desc:"Explore with demo inventory", icon:"database"},
+    ];
+    body.innerHTML = `
+    <div class="onb-panel fade-in">
+      <div class="eyebrow">Step 3 of 4</div>
+      <h2>Connect your inventory</h2>
+      <div class="desc">Choose where ReStock AI should read stock levels and sales history from.</div>
+      <div class="connect-grid">
+        ${sources.map(s=>`
+          <div class="connect-card ${onbConnectSelected===s.key?'selected':''}" data-src="${s.key}">
+            <div class="cicon">${ICO[s.icon]}</div>
+            <div class="ctext"><div class="cname">${s.name}</div><div class="cdesc">${s.desc}</div></div>
+            <div class="ccheck"></div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="onb-nav">
+        <button class="btn btn-secondary" id="onbBack2">${ICO.arrowLeft} Back</button>
+        <button class="btn btn-primary" id="onbNext2" ${onbConnectSelected?'':'disabled'}>Continue ${ICO.arrowRight}</button>
+      </div>
+    </div>`;
+    document.querySelectorAll("[data-src]").forEach(c=>c.addEventListener("click", ()=>{
+      onbConnectSelected = c.dataset.src; renderOnboardingBody();
+    }));
+    document.getElementById("onbBack2").addEventListener("click", ()=>{ onbStep=1; renderOnboardingBody(); });
+    const nextBtn = document.getElementById("onbNext2");
+    if(nextBtn) nextBtn.addEventListener("click", ()=>{ onbStep=3; renderOnboardingBody(); });
+  } else {
+    body.innerHTML = `
+    <div class="onb-panel fade-in">
+      <div class="eyebrow">Step 4 of 4</div>
+      <h2>Set your defaults</h2>
+      <div class="desc">You can change these anytime from settings. They only affect how proposals are generated — approval is always manual.</div>
+      <div class="pref-list">
+        <div class="pref-row">
+          <div><div class="ptitle">Automatic daily inventory check</div><div class="pdesc">Scan stock levels every morning at 8:00 AM</div></div>
+          <button class="toggle ${onbPrefs.autoCheck?'on':''}" data-pref="autoCheck"><span class="knob"></span></button>
+        </div>
+        <div class="pref-row">
+          <div><div class="ptitle">Require approval for every order</div><div class="pdesc">The agent can never spend without your sign-off</div></div>
+          <button class="toggle ${onbPrefs.requireApproval?'on':''}" data-pref="requireApproval" disabled style="opacity:.6;cursor:default;"><span class="knob"></span></button>
+        </div>
+        <div class="pref-row">
+          <div><div class="ptitle">Email me when a proposal is ready</div><div class="pdesc">Get notified as soon as the agent finishes reasoning</div></div>
+          <button class="toggle ${onbPrefs.notify?'on':''}" data-pref="notify"><span class="knob"></span></button>
+        </div>
+      </div>
+      <div class="onb-nav">
+        <button class="btn btn-secondary" id="onbBack3">${ICO.arrowLeft} Back</button>
+        <button class="btn btn-primary" id="onbFinish">Finish setup ${ICO.arrowRight}</button>
+      </div>
+    </div>`;
+    document.querySelectorAll("[data-pref]").forEach(t=>{
+      if(t.hasAttribute("disabled")) return;
+      t.addEventListener("click", ()=>{ onbPrefs[t.dataset.pref] = !onbPrefs[t.dataset.pref]; renderOnboardingBody(); });
+    });
+    document.getElementById("onbBack3").addEventListener("click", ()=>{ onbStep=2; renderOnboardingBody(); });
+    document.getElementById("onbFinish").addEventListener("click", ()=>{
+      merchantPrefs.autoCheck = onbPrefs.autoCheck;
+      merchantPrefs.notify = onbPrefs.notify;
+      merchantPrefs.connectedSource = onbConnectSelected || "sample";
+      startApp(); showToast("Workspace ready — welcome in");
+    });
+  }
+}
+
+// =========================================================================
+// DASHBOARD APP (data model + views)
+// =========================================================================
+let products = [
+  {id:1,name:"Milk",stock:23,threshold:50,unit:"units",price:48,icon:"box",
+   sales:[["Aug 21",7],["Aug 22",9],["Aug 23",8],["Aug 24",6],["Aug 25",7],["Aug 26",5]],
+   suppliers:[{name:"Fresh Supply",price:48,delivery:2},{name:"Dairy Direct",price:44,delivery:6}]},
+  {id:2,name:"Coffee Beans",stock:12,threshold:30,unit:"kg",price:120,icon:"box",
+   sales:[["Aug 21",2],["Aug 22",3],["Aug 23",4],["Aug 24",2],["Aug 25",3],["Aug 26",2]],
+   suppliers:[{name:"Bean Supplier",price:120,delivery:3},{name:"Roast Collective",price:108,delivery:8}]},
+  {id:3,name:"Rice",stock:84,threshold:50,unit:"kg",price:52,icon:"box",
+   sales:[["Aug 21",2],["Aug 22",3],["Aug 23",2],["Aug 24",3],["Aug 25",4],["Aug 26",3]],
+   suppliers:[{name:"Rice Supplier",price:52,delivery:4}]},
+  {id:4,name:"Cooking Oil",stock:18,threshold:25,unit:"L",price:150,icon:"box",
+   sales:[["Aug 21",1],["Aug 22",2],["Aug 23",3],["Aug 24",2],["Aug 25",1],["Aug 26",2]],
+   suppliers:[{name:"Supplier A",price:150,delivery:2},{name:"Supplier B",price:138,delivery:6}]},
+];
+function productStatus(p){ return p.stock < p.threshold ? "LOW STOCK" : "Healthy"; }
+function sparkline(sales, color){
+  const vals = sales.map(s=>s[1]);
+  const max = Math.max(...vals,1), min = Math.min(...vals,0);
+  const w=54,h=20,n=vals.length;
+  const pts = vals.map((v,i)=>{
+    const x = (i/(n-1))*w;
+    const y = h - ((v-min)/(max-min||1))*h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+let proposals = [];
+let orders = [
+  {id:1041,productId:2,productName:"Coffee Beans",supplier:"Bean Supplier",qty:40,unitPrice:120,amount:4800,status:"APPROVED",time:"11:20 AM"},
+  {id:1040,productId:4,productName:"Cooking Oil",supplier:"Supplier A",qty:12,unitPrice:150,amount:1800,status:"FAILED",time:"9:47 AM"},
+  {id:1039,productId:3,productName:"Rice",supplier:"Rice Supplier",qty:48,unitPrice:52,amount:2496,status:"PROPOSED",time:"9:02 AM"},
+];
+let nextOrderId = 1042;
+let nextProposalId = 501;
+
+let auditEvents = [
+  {id:1,orderId:1041,time:"Aug 27 · 11:20",actor:"AGENT",title:"LOW STOCK DETECTED",desc:"Coffee Beans: 12 kg < 30 kg threshold.",reasoning:null,meta:{"Product ID":2}},
+  {id:2,orderId:1041,time:"Aug 27 · 11:20",actor:"AGENT",title:"FORECAST GENERATED",desc:"Recommended 40 kg.",reasoning:"Recent sales average roughly 3 kg a day; current stock sits well below the normal operating level, so the agent recommends replenishing enough to cover the next demand cycle with buffer.",meta:{"Recommended quantity":40}},
+  {id:3,orderId:1041,time:"Aug 27 · 11:20",actor:"AGENT",title:"SUPPLIER SELECTED",desc:"Bean Supplier chosen over Roast Collective.",reasoning:"Roast Collective is cheaper per kilogram, but its eight-day delivery window creates a higher stockout risk given current velocity. Bean Supplier costs more but arrives in three days.",meta:{"Chosen supplier":"Bean Supplier"}},
+  {id:4,orderId:1041,time:"Aug 27 · 11:21",actor:"HUMAN",title:"ORDER APPROVED",desc:"Merchant approved the purchase proposal.",reasoning:null,meta:{"Approved by":"Merchant"}},
+  {id:5,orderId:1040,time:"Aug 27 · 9:47",actor:"SYSTEM",title:"RAZORPAY PAYOUT FAILED",desc:"Supplier payment could not be completed.",reasoning:null,meta:{"Reason":"Payment could not be processed"}},
+  {id:6,orderId:1039,time:"Aug 27 · 9:02",actor:"AGENT",title:"FORECAST GENERATED",desc:"Recommended 48 kg for Rice.",reasoning:"Demand has been steady; this replenishment restores buffer ahead of the weekend uptick observed in prior weeks.",meta:{"Recommended quantity":48}},
+];
+let nextAuditId = 7;
+
+function fmtMoney(n){ return "₹" + n.toLocaleString("en-IN"); }
+function addAudit(orderId, actor, title, desc, reasoning, meta, proposalId){
+  auditEvents.unshift({id:nextAuditId++, orderId, proposalId: proposalId||null, time:"Aug 27 · "+new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}), actor, title, desc, reasoning, meta: meta||{}});
+}
+let recentActivity = [
+  {text:"AI generated proposal for Rice", time:"9:02 AM", actor:"AGENT"},
+  {text:"Order #1040 payment failed", time:"9:47 AM", actor:"SYSTEM"},
+  {text:"Order #1041 approved", time:"11:21 AM", actor:"HUMAN"},
+];
+function pushActivity(text, actor){ recentActivity.unshift({text, time:"Just now", actor}); recentActivity = recentActivity.slice(0,8); }
+
+// ---------------- Router ----------------
+let route = {view:"dashboard", params:{}};
+function nav(view, params){ route = {view, params: params||{}}; render(); window.scrollTo(0,0); }
+
+const NAV_ITEMS = [
+  {key:"dashboard", label:"Dashboard", icon:"grid"},
+  {key:"inventory", label:"Inventory", icon:"box"},
+  {key:"proposals", label:"Recommendations", icon:"fileCheck"},
+  {key:"orders", label:"Orders", icon:"receipt"},
+  {key:"spending", label:"Spending", icon:"wallet"},
+  {key:"audit", label:"Activity", icon:"clock"},
+  {key:"settings", label:"Settings", icon:"sliders"},
+];
+function activeSection(view){
+  if(view==="productDetail") return "inventory";
+  if(view==="proposalDetail") return "proposals";
+  if(view==="orderDetail" || view==="altSupplier") return "orders";
+  return view;
+}
+function renderNav(){
+  const el = document.getElementById("navGroup");
+  el.innerHTML = NAV_ITEMS.map(item=>{
+    const active = activeSection(route.view) === item.key;
+    let badge = "";
+    if(item.key==="proposals"){
+      const n = proposals.filter(p=>p.status==="WAITING FOR APPROVAL").length;
+      if(n>0) badge = `<span class="badge">${n}</span>`;
+    }
+    return `<button class="nav-item ${active?"active":""}" data-nav="${item.key}">${ICO[item.icon]}<span>${item.label}</span>${badge}</button>`;
+  }).join("");
+  el.querySelectorAll("[data-nav]").forEach(b=>b.addEventListener("click", ()=>nav(b.dataset.nav)));
+  const sec = NAV_ITEMS.find(i=>i.key===activeSection(route.view));
+  document.getElementById("crumb").innerHTML = `<b>${sec?sec.label:"Dashboard"}</b>`;
+}
+
+document.getElementById("userChip").addEventListener("click",(e)=>{
+  document.getElementById("userMenu").classList.toggle("open");
+  e.stopPropagation();
+});
+document.addEventListener("click", ()=>{ document.getElementById("userMenu")?.classList.remove("open"); });
+document.getElementById("btnLogout").addEventListener("click", ()=>{ setScreen("login"); showToast("Signed out"); });
+document.getElementById("btnBilling").addEventListener("click", ()=>{ document.getElementById("userMenu").classList.remove("open"); openBillingModal(); });
+
+let paymentMethod = {brand:"Visa", last4:"4242", expiry:"09/28"};
+let invoices = [
+  {id:"INV-1042", date:"Aug 1, 2026", amount:1999, status:"Paid"},
+  {id:"INV-1041", date:"Jul 1, 2026", amount:1999, status:"Paid"},
+  {id:"INV-1040", date:"Jun 1, 2026", amount:2499, status:"Paid"},
+];
+function updateSidebarPlanLabel(){
+  const p = PLANS.find(x=>x.key===selectedPlan);
+  document.getElementById("sidebarPlanLabel").textContent = p.name + " plan";
+}
+
+function openBillingModal(showPlanPicker){
+  const root = document.getElementById("modalRoot");
+  const plan = PLANS.find(p=>p.key===selectedPlan);
+  root.innerHTML = `
+  <div class="overlay" id="ovBilling">
+    <div class="modal fade-in-fast" style="max-width:${showPlanPicker?'860px':'480px'};">
+      <div class="modal-head" style="display:flex;align-items:center;justify-content:space-between;">
+        <h3>${showPlanPicker ? "Change plan" : "Billing"}</h3>
+        <button class="icon-btn" id="btnCloseBillingX" style="border:none;">${ICO.x}</button>
+      </div>
+      <div class="modal-body" id="billingBody" style="max-height:70vh;overflow-y:auto;"></div>
+    </div>
+  </div>`;
+  document.getElementById("btnCloseBillingX").addEventListener("click", closeModal);
+  renderBillingBody(showPlanPicker);
+}
+
+function renderBillingBody(showPlanPicker){
+  const body = document.getElementById("billingBody");
+  const plan = PLANS.find(p=>p.key===selectedPlan);
+
+  if(showPlanPicker){
+    body.innerHTML = `
+      <div class="desc" style="margin:0 0 20px 0;color:var(--text-soft);font-size:13px;">Changes apply immediately. You won't be charged again until your next billing date.</div>
+      ${renderPlanSelector()}
+      <div class="onb-nav" style="margin-top:24px;">
+        <button class="btn btn-secondary" id="btnCancelPlanChange">Cancel</button>
+        <button class="btn btn-primary" id="btnConfirmPlanChange">Confirm ${plan.name} plan</button>
+      </div>`;
+    bindPlanSelector(body, ()=>renderBillingBody(true));
+    document.getElementById("btnCancelPlanChange").addEventListener("click", ()=>renderBillingBody(false));
+    document.getElementById("btnConfirmPlanChange").addEventListener("click", ()=>{
+      updateSidebarPlanLabel();
+      pushActivity(`Switched to ${PLANS.find(p=>p.key===selectedPlan).name} plan`, "HUMAN");
+      showToast(`You're now on the ${PLANS.find(p=>p.key===selectedPlan).name} plan`);
+      renderBillingBody(false);
+    });
+    return;
+  }
+
+  const price = billingCycle==='annual' ? plan.priceAnnual : plan.priceMonthly;
+  body.innerHTML = `
+    <div class="billing-plan-card">
+      <div class="bp-left">
+        <div class="bp-icon">${ICO[plan.icon]}</div>
+        <div>
+          <div class="bp-name">${plan.name} plan</div>
+          <div class="bp-sub">${price===0 ? "Free" : fmtMoney(price)+"/mo · billed "+billingCycle}</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btnChangePlan">Change plan</button>
+    </div>
+
+    <div class="why-label">Payment method</div>
+    <div class="payment-method-row">
+      <div class="pm-card-icon">${ICO.creditCard}</div>
+      <div class="pm-details">
+        <div class="pm-brand">${paymentMethod.brand} •••• ${paymentMethod.last4}</div>
+        <div class="pm-exp">Expires ${paymentMethod.expiry}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btnEditPayment">Edit</button>
+    </div>
+    <div id="editPaymentForm"></div>
+
+    <div class="why-label" style="margin-top:22px;">Billing history</div>
+    <div class="panel" style="padding:6px 18px;">
+      ${invoices.map(iv=>`
+        <div class="invoice-row">
+          <span class="iv-id">${iv.id}</span>
+          <span class="iv-date">${iv.date}</span>
+          <span class="iv-amt">${fmtMoney(iv.amount)}</span>
+          <span class="status-chip paid">${iv.status}</span>
+          <span class="cell-link iv-dl">${ICO.download}</span>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="confirm-note" style="margin-top:18px;display:flex;gap:10px;align-items:flex-start;">
+      <span style="color:var(--brand);flex-shrink:0;">${ICO.shield}</span>
+      <span>Payments are processed securely via RazorpayX. This is a demo — no real card is ever charged.</span>
+    </div>
+  `;
+  document.getElementById("btnChangePlan").addEventListener("click", ()=>renderBillingBody(true));
+  document.getElementById("btnEditPayment").addEventListener("click", ()=>{
+    document.getElementById("editPaymentForm").innerHTML = `
+      <div class="panel" style="margin-top:10px;">
+        <div class="field"><label>Card number</label><div class="field-input-wrap">${ICO.creditCard}<input type="text" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242"/></div></div>
+        <div style="display:flex;gap:12px;">
+          <div class="field" style="flex:1;"><label>Expiry</label><input style="width:100%;padding:11px 14px;border-radius:9px;border:1.5px solid var(--line);font-size:13.5px;" placeholder="MM/YY" value="09/28"/></div>
+          <div class="field" style="flex:1;"><label>CVC</label><input style="width:100%;padding:11px 14px;border-radius:9px;border:1.5px solid var(--line);font-size:13.5px;" placeholder="•••" value="123"/></div>
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" id="btnSavePayment">Save payment method</button>
+      </div>`;
+    document.getElementById("btnSavePayment").addEventListener("click", ()=>{
+      showToast("Payment method updated");
+      document.getElementById("editPaymentForm").innerHTML = "";
+    });
+  });
+}
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.innerHTML = ICO.check + `<span>${msg}</span>`;
+  t.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+function runLoadingSequence(container, steps, onDone, delay){
+  delay = delay || 550;
+  container.innerHTML = `<div class="loading-block"><div class="spinner"></div><div class="loading-text" id="ldsText"></div></div>`;
+  const textEl = container.querySelector("#ldsText");
+  let i = 0;
+  function step(){
+    if(i < steps.length){ textEl.textContent = steps[i]; i++; setTimeout(step, delay); }
+    else { onDone(); }
+  }
+  step();
+}
+
+// ==========================================================================
+// VIEW: Dashboard
+// ==========================================================================
+let changeEvents = [
+  {type:"up", icon:"trendUp", text:"Sales increased <b>12%</b> compared to last week", time:"Today"},
+  {type:"down", icon:"trendDown", text:"<b>Milk</b> stock decreased 18 units since yesterday", time:"Today"},
+  {type:"warn", icon:"alert", text:"<b>Cooking Oil</b> entered low-stock range", time:"Yesterday"},
+  {type:"down", icon:"alert", text:"Order <b>#1040</b> payment failed", time:"Yesterday"},
+  {type:"up", icon:"trendUp", text:"Coffee Beans sales increased <b>9%</b> this week", time:"2 days ago"},
+];
+
+function viewDashboard(){
+  const low = products.filter(p=>productStatus(p)==="LOW STOCK");
+  const pendingProposals = proposals.filter(p=>p.status==="WAITING FOR APPROVAL").length;
+  const pendingPayments = orders.filter(o=>o.status==="APPROVED").length;
+  const salesThisMonth = 218400, purchasesThisMonth = 131400, inventoryValue = 96200, pendingProcurement = orders.filter(o=>o.status==="PROPOSED"||o.status==="APPROVED").reduce((s,o)=>s+o.amount,0);
+
+  return `
+  <div class="page-header">
+    <div><h1>Good morning, Meera</h1><div class="page-sub">Here's what needs your attention right now.</div></div>
+    <button class="btn btn-primary" id="btnCheckInventory">${ICO.sparkles} Check Inventory</button>
+  </div>
+
+  <div class="section-label">Business snapshot</div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="top-row"><div class="label">Sales this month</div><div class="sicon" style="background:var(--system-bg);color:var(--system);">${ICO.trendUp}</div></div><div class="value">${fmtMoney(salesThisMonth)}</div><div class="trend">Facts, not AI-estimated</div></div>
+    <div class="stat-card"><div class="top-row"><div class="label">Purchases this month</div><div class="sicon" style="background:var(--paper-alt);color:var(--text-soft);">${ICO.receipt}</div></div><div class="value">${fmtMoney(purchasesThisMonth)}</div><div class="trend">All approved orders</div></div>
+    <div class="stat-card"><div class="top-row"><div class="label">Inventory value</div><div class="sicon" style="background:var(--paper-alt);color:var(--text-soft);">${ICO.box}</div></div><div class="value">${fmtMoney(inventoryValue)}</div><div class="trend">Current stock, at cost</div></div>
+    <div class="stat-card accent-agent"><div class="top-row"><div class="label">Pending procurement</div><div class="sicon">${ICO.wallet}</div></div><div class="value">${fmtMoney(pendingProcurement)}</div><div class="trend">Not yet paid out</div></div>
+  </div>
+
+  <div class="section-label">Needs attention</div>
+  <div id="attentionList">
+    ${low.length ? low.map(p=>`
+      <div class="attention-card">
+        <div class="info">
+          <div class="attn-icon">${ICO.alert}</div>
+          <div>
+            <div class="title">${p.name}</div>
+            <div class="meta">Stock: <span class="mono">${p.stock} ${p.unit}</span> &nbsp;·&nbsp; Threshold: <span class="mono">${p.threshold} ${p.unit}</span></div>
+          </div>
+        </div>
+        <span class="status-chip low">Low stock</span>
+        <button class="btn btn-secondary btn-sm" data-genprop="${p.id}">Generate Proposal</button>
+      </div>
+    `).join("") : `<div class="empty-state"><div class="glyph">${ICO.check}</div><div class="h">Inventory looks healthy</div>No products are currently below their reorder threshold.</div>`}
+  </div>
+
+  <div class="section-label">What changed</div>
+  <div class="activity-feed">
+    ${changeEvents.length ? changeEvents.map(c=>`
+      <div class="change-row">
+        <div class="change-icon ${c.type}">${ICO[c.icon]}</div>
+        <div class="change-text">${c.text}</div>
+        <div class="change-time">${c.time}</div>
+      </div>
+    `).join("") : `<div class="empty-state"><div class="h">Nothing new to report</div></div>`}
+  </div>
+
+  <div class="section-label">Recent activity</div>
+  <div class="activity-feed">
+    ${recentActivity.map(a=>`
+      <div class="activity-row">
+        <span class="adot" style="background:${a.actor==='HUMAN'?'var(--human)':a.actor==='SYSTEM'?'var(--system)':'var(--agent)'}"></span>
+        <span class="atag">${a.actor}</span>
+        <span class="atext">${a.text}</span>
+        <span class="atime">${a.time}</span>
+      </div>
+    `).join("")}
+  </div>
+  `;
+}
+function bindDashboard(){
+  document.getElementById("btnCheckInventory").addEventListener("click", (e)=>{
+    const btn = e.currentTarget;
+    btn.disabled = true; btn.textContent = "Checking…";
+    const holder = document.getElementById("attentionList");
+    runLoadingSequence(holder, ["Checking inventory...","Scanning products...","Identifying low-stock products..."], ()=>{
+      pushActivity("Inventory check completed", "SYSTEM");
+      document.getElementById("content").innerHTML = viewDashboard();
+      bindDashboard();
+      showToast("Inventory check complete");
+    }, 500);
+  });
+  document.querySelectorAll("[data-genprop]").forEach(b=>{
+    b.addEventListener("click", ()=>generateProposalFlow(parseInt(b.dataset.genprop), document.getElementById("content")));
+  });
+}
+
+// ==========================================================================
+// VIEW: Inventory
+// ==========================================================================
+let inventoryFilter = "All";
+let inventorySearch = "";
+let showInventoryError = false;
+function viewInventory(){
+  const rows = products.filter(p=>{
+    const st = productStatus(p);
+    if(inventoryFilter==="Low Stock" && st!=="LOW STOCK") return false;
+    if(inventoryFilter==="Healthy" && st!=="Healthy") return false;
+    if(inventorySearch && !p.name.toLowerCase().includes(inventorySearch.toLowerCase())) return false;
+    return true;
+  });
+  return `
+  <div class="page-header">
+    <div><h1>Inventory</h1><div class="page-sub">Full product list and current stock levels.</div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="icon-btn" id="btnSimError" title="Simulate a network error (demo)">${ICO.wifiOff}</button>
+      <button class="btn btn-primary" id="btnCheckInventory2">${ICO.sparkles} Check Inventory</button>
+    </div>
+  </div>
+
+  <div class="dev-panel">
+    <div class="dp-head">${ICO.beaker}<span class="dp-title">Demo sales — development only</span></div>
+    <div class="dp-desc">No live POS is connected yet. Use this to simulate a sale and see stock, low-stock detection, and recommendations react in real time.</div>
+    <div class="dev-form-row">
+      <div class="field"><label style="font-size:11.5px;">Product</label>
+        <select id="demoSaleProduct">${products.map(p=>`<option value="${p.id}">${p.name}</option>`).join("")}</select>
+      </div>
+      <div class="field" style="max-width:120px;"><label style="font-size:11.5px;">Quantity sold</label>
+        <input type="number" id="demoSaleQty" value="2" min="1"/>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btnRecordSale">Record Sale</button>
+    </div>
+  </div>
+
+  ${showInventoryError ? `
+  <div class="error-banner">
+    <div class="eb-icon">${ICO.wifiOff}</div>
+    <div class="eb-text"><div class="eb-title">Couldn't load inventory</div><div class="eb-desc">The request to the inventory service timed out. Your data hasn't changed — try again.</div></div>
+    <button class="btn btn-secondary btn-sm" id="btnRetryInventory">${ICO.refresh} Retry</button>
+  </div>
+  ` : `
+  <div class="toolbar">
+    <div class="search-input-wrap">${ICO.search}<input class="search-input" id="invSearch" placeholder="Search products..." value="${inventorySearch}"/></div>
+    <select class="select-input" id="invFilter">
+      ${["All","Low Stock","Healthy"].map(f=>`<option ${inventoryFilter===f?"selected":""}>${f}</option>`).join("")}
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Product</th><th>Stock</th><th>Trend</th><th>Threshold</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        ${rows.map(p=>{
+          const st = productStatus(p);
+          const color = st==='LOW STOCK' ? 'var(--danger)' : 'var(--system)';
+          return `<tr class="clickable" data-product="${p.id}">
+            <td class="cell-strong">${p.name}</td>
+            <td class="mono">${p.stock} ${p.unit}</td>
+            <td>${sparkline(p.sales, color)}</td>
+            <td class="mono">${p.threshold} ${p.unit}</td>
+            <td><span class="status-chip ${st==='LOW STOCK'?'low':'healthy'}">${st}</span></td>
+            <td><span class="cell-link">View ${ICO.arrowRight}</span></td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="6" style="text-align:center;color:var(--text-soft);padding:30px;">No products match.</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+  `}
+  `;
+}
+function bindInventory(){
+  const btn = document.getElementById("btnCheckInventory2");
+  if(btn) btn.addEventListener("click", ()=>{
+    btn.disabled = true; btn.textContent="Checking…";
+    runLoadingSequence(document.getElementById("content"), ["Checking inventory...","Scanning products...","Low-stock products identified"], ()=>{
+      pushActivity("Inventory check completed", "SYSTEM");
+      nav("inventory"); showToast("Inventory check complete");
+    }, 500);
+  });
+  const errBtn = document.getElementById("btnSimError");
+  if(errBtn) errBtn.addEventListener("click", ()=>{ showInventoryError = true; refreshInventoryTable(); });
+  const retryBtn = document.getElementById("btnRetryInventory");
+  if(retryBtn) retryBtn.addEventListener("click", ()=>{ showInventoryError = false; refreshInventoryTable(); showToast("Inventory reloaded"); });
+  const invSearch = document.getElementById("invSearch");
+  if(invSearch) invSearch.addEventListener("input", (e)=>{ inventorySearch = e.target.value; refreshInventoryTable(); });
+  const invFilter = document.getElementById("invFilter");
+  if(invFilter) invFilter.addEventListener("change", (e)=>{ inventoryFilter = e.target.value; refreshInventoryTable(); });
+  document.querySelectorAll("[data-product]").forEach(r=>r.addEventListener("click", ()=>nav("productDetail",{id:parseInt(r.dataset.product)})));
+  const saleBtn = document.getElementById("btnRecordSale");
+  if(saleBtn) saleBtn.addEventListener("click", ()=>{
+    const pid = parseInt(document.getElementById("demoSaleProduct").value);
+    const qty = Math.max(1, parseInt(document.getElementById("demoSaleQty").value) || 1);
+    const p = products.find(x=>x.id===pid);
+    const wasLow = productStatus(p)==="LOW STOCK";
+    p.stock = Math.max(0, p.stock - qty);
+    const today = new Date().toLocaleDateString('en-IN',{month:'short',day:'numeric'});
+    p.sales.push([today, qty]);
+    if(p.sales.length>10) p.sales.shift();
+    pushActivity(`Sale recorded: ${qty} ${p.unit} of ${p.name}`, "SYSTEM");
+    const nowLow = productStatus(p)==="LOW STOCK";
+    if(nowLow && !wasLow){
+      addAudit(null, "AGENT", "LOW STOCK DETECTED", `${p.name}: ${p.stock} ${p.unit} < ${p.threshold} ${p.unit} threshold`, null, {"Product ID":p.id});
+      changeEvents.unshift({type:"warn", icon:"alert", text:`<b>${p.name}</b> entered low-stock range`, time:"Just now"});
+      showToast(`Sale recorded — ${p.name} is now low stock`);
+    } else {
+      showToast("Sale recorded");
+    }
+    refreshInventoryTable();
+  });
+}
+function refreshInventoryTable(){ document.getElementById("content").innerHTML = viewInventory(); bindInventory(); }
+
+// ==========================================================================
+// VIEW: Product Detail
+// ==========================================================================
+function viewProductDetail(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return `<div class="empty-state">Product not found.</div>`;
+  const st = productStatus(p);
+  const avgDaily = p.sales.length ? +(p.sales.reduce((a,s)=>a+s[1],0)/p.sales.length).toFixed(1) : null;
+  const coverage = avgDaily ? +(p.stock/avgDaily).toFixed(1) : null;
+  return `
+  <a class="back-link" id="backToInv">${ICO.arrowLeft} Inventory</a>
+  <div class="page-header"><div><h1>${p.name}</h1></div></div>
+  <div class="detail-grid">
+    <div>
+      <div class="section-label" style="margin-top:0;">Facts</div>
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="kv-row"><span class="k">Current Stock</span><span class="v mono">${p.stock} ${p.unit}</span></div>
+        <div class="kv-row"><span class="k">Reorder Threshold</span><span class="v mono">${p.threshold} ${p.unit}</span></div>
+        <div class="kv-row"><span class="k">Status</span><span class="status-chip ${st==='LOW STOCK'?'low':'healthy'}">${st}</span></div>
+        <div class="kv-row"><span class="k">Average daily sales</span><span class="v mono">${avgDaily!==null ? avgDaily+' '+p.unit+'/day' : 'Not enough data'}</span></div>
+        <div class="kv-row"><span class="k">Estimated stock coverage</span><span class="v mono">${coverage!==null ? coverage+' days' : 'Not enough data'}</span></div>
+      </div>
+      <div class="section-label">Sales history</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Units Sold</th></tr></thead>
+          <tbody>${[...p.sales].reverse().map(s=>`<tr><td>${s[0]}</td><td class="mono">${s[1]}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section-label" style="margin-top:0;">Suppliers</div>
+      <div class="panel">
+        ${p.suppliers.map(s=>`
+          <div class="supplier-row">
+            <span class="name">${s.name}</span>
+            <span class="terms mono">₹${s.price}/unit · ${s.delivery} days</span>
+          </div>
+        `).join("")}
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-primary btn-block" id="btnGenProposal">${ICO.sparkles} Generate AI Proposal</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+function bindProductDetail(id){
+  document.getElementById("backToInv").addEventListener("click", ()=>nav("inventory"));
+  document.getElementById("btnGenProposal").addEventListener("click", ()=>generateProposalFlow(id, document.getElementById("content")));
+}
+
+// ---------------- Shared: proposal generation flow ----------------
+function generateProposalFlow(productId, container){
+  const p = products.find(x=>x.id===productId);
+  if(!p) return;
+  const overlayHost = document.createElement("div");
+  overlayHost.className = "panel fade-in";
+  overlayHost.style.marginTop = "16px";
+  container.appendChild(overlayHost);
+  overlayHost.scrollIntoView({behavior:"smooth", block:"center"});
+  runLoadingSequence(overlayHost, ["Analyzing sales history...","Evaluating suppliers...","Validating recommendation..."], ()=>{
+    const proposal = buildProposal(p);
+    proposals.push(proposal);
+    pushActivity(`AI generated proposal for ${p.name}`, "AGENT");
+    addAudit(null, "AGENT", "LOW STOCK DETECTED", `${p.name}: ${p.stock} ${p.unit} < ${p.threshold} ${p.unit} threshold`, null, {"Product ID":p.id}, proposal.id);
+    addAudit(null, "AGENT", "FORECAST GENERATED", `Recommended ${proposal.qty} ${p.unit}.`, proposal.reasoning, {"Recommended quantity":proposal.qty}, proposal.id);
+    addAudit(null, "AGENT", "SUPPLIER SELECTED", proposal.supplier, proposal.supplierReasoning, {"Chosen supplier":proposal.supplier}, proposal.id);
+    showToast("Proposal ready");
+    nav("proposalDetail",{id:proposal.id});
+  }, 600);
+}
+function buildProposal(p){
+  const avgDaily = Math.max(1, Math.round(p.sales.reduce((a,s)=>a+s[1],0)/p.sales.length));
+  const qty = Math.round(avgDaily * 7 + (p.threshold - p.stock));
+  const sorted = [...p.suppliers].sort((a,b)=>a.delivery-b.delivery);
+  const fastest = sorted[0];
+  const cheapest = [...p.suppliers].sort((a,b)=>a.price-b.price)[0];
+  const chosen = fastest;
+  const reasoning = `Recent sales show an average daily demand of approximately ${avgDaily} ${p.unit}. Current inventory is below the normal operating level, so the agent recommends replenishing ${qty} ${p.unit} to cover expected demand during the next cycle.`;
+  let supplierReasoning;
+  if(chosen.name === cheapest.name){
+    supplierReasoning = `${chosen.name} offers both the lowest cost per unit and the fastest delivery window among available suppliers, making it the clear choice.`;
+  } else {
+    supplierReasoning = `Although ${cheapest.name} is cheaper, its ${cheapest.delivery}-day delivery window creates a higher stockout risk. ${chosen.name} costs more but can arrive in ${chosen.delivery} days.`;
+  }
+  return {
+    id: nextProposalId++, productId: p.id, productName: p.name, unit: p.unit,
+    currentStock: p.stock, threshold: p.threshold, qty, supplier: chosen.name,
+    unitPrice: chosen.price, total: qty * chosen.price, reasoning, supplierReasoning,
+    alternatives: p.suppliers, status: "WAITING FOR APPROVAL",
+  };
+}
+
+// ==========================================================================
+// VIEW: Proposals list
+// ==========================================================================
+function viewProposals(){
+  const list = proposals.filter(p=>p.status==="WAITING FOR APPROVAL");
+  return `
+  <div class="page-header"><div><h1>AI Proposals</h1><div class="page-sub">Purchases the agent recommends, awaiting your decision.</div></div></div>
+  ${list.length ? list.map(p=>`
+    <div class="prop-card">
+      <div class="top"><h3>${p.productName}</h3><span class="status-chip proposed">Waiting for approval</span></div>
+      <div class="fields">
+        <div>Current stock: <b>${p.currentStock} ${p.unit}</b></div>
+        <div>Recommended: <b>${p.qty} ${p.unit}</b></div>
+        <div>Supplier: <b>${p.supplier}</b></div>
+        <div>Total: <b>${fmtMoney(p.total)}</b></div>
+      </div>
+      <div class="foot"><span></span><button class="btn btn-secondary btn-sm" data-review="${p.id}">Review Proposal</button></div>
+    </div>
+  `).join("") : `<div class="empty-state"><div class="glyph">${ICO.fileCheck}</div><div class="h">No pending proposals</div>When the agent identifies a replenishment opportunity, it will appear here.</div>`}
+  `;
+}
+function bindProposals(){ document.querySelectorAll("[data-review]").forEach(b=>b.addEventListener("click", ()=>nav("proposalDetail",{id:parseInt(b.dataset.review)}))); }
+
+// ==========================================================================
+// VIEW: Proposal detail (the centerpiece)
+// ==========================================================================
+function viewProposalDetail(id){
+  const p = proposals.find(x=>x.id===id);
+  if(!p) return `<div class="empty-state">Proposal not found.</div>`;
+  const others = p.alternatives.filter(a=>a.name!==p.supplier);
+  return `
+  <a class="back-link" id="backToProposals">${ICO.arrowLeft} Proposals</a>
+  <div class="page-header"><div><h1>Purchase Proposal</h1></div></div>
+  <div class="doc" id="proposalDoc">
+    <div class="doc-banner">${ICO.alert} Action required — this purchase requires your approval.</div>
+    <div class="doc-body">
+      <div class="doc-section">
+        <div class="stitle">Product</div>
+        <div class="product-box">
+          <div class="pmark">${ICO.box}</div>
+          <div><div class="pname">${p.productName}</div><div class="prow">Current stock: ${p.currentStock} ${p.unit} &nbsp;·&nbsp; Reorder threshold: ${p.threshold} ${p.unit}</div></div>
+        </div>
+      </div>
+
+      <div class="doc-section">
+        <div class="stitle">${ICO.brain} AI Demand Forecast</div>
+        <div class="forecast-num"><div class="n">${p.qty}</div><div class="u">${p.unit} recommended</div></div>
+        <div class="why-label">Why?</div>
+        <div class="reason-box">${p.reasoning}</div>
+      </div>
+
+      <div class="doc-section">
+        <div class="stitle">${ICO.truck} Supplier Recommendation</div>
+        <div class="supplier-pick">
+          <div class="head">${ICO.check} ${p.supplier}</div>
+          <div class="terms mono">₹${p.unitPrice} / unit · Delivery: ${p.alternatives.find(a=>a.name===p.supplier).delivery} days</div>
+          <div class="why-label">Why this supplier?</div>
+          <div class="reason-box plain">${p.supplierReasoning}</div>
+        </div>
+      </div>
+
+      ${others.length ? `
+      <div class="doc-section">
+        <div class="stitle">Supplier Comparison</div>
+        <div class="panel" style="padding:4px 20px;">
+          ${p.alternatives.map(a=>`<div class="supplier-row"><span class="name">${a.name}${a.name===p.supplier?' &nbsp;'+ICO.check:''}</span><span class="terms mono">₹${a.price}/unit · ${a.delivery} days</span></div>`).join("")}
+        </div>
+      </div>` : ""}
+
+      <div class="divider"></div>
+
+      <div class="doc-section">
+        <div class="stitle">Order Summary</div>
+        <div class="order-summary-row"><span>Quantity</span><b class="mono">${p.qty} ${p.unit}</b></div>
+        <div class="order-summary-row"><span>Price per unit</span><b class="mono">₹${p.unitPrice}</b></div>
+        <div class="order-summary-row total"><span>Total</span><span class="mono">${fmtMoney(p.total)}</span></div>
+      </div>
+
+      <div class="approval-notice">
+        <span class="glyph">${ICO.alert}</span>
+        <div><div class="t">Human approval required</div><div class="d">The AI cannot authorize this payment. You decide whether this purchase happens.</div></div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-secondary" id="btnReject">Reject</button>
+        <button class="btn btn-approve" id="btnApprove">${ICO.handshake} Approve Purchase</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+function bindProposalDetail(id){
+  document.getElementById("backToProposals").addEventListener("click", ()=>nav("proposals"));
+  document.getElementById("btnReject").addEventListener("click", ()=>{
+    const p = proposals.find(x=>x.id===id);
+    p.status = "REJECTED";
+    pushActivity(`Proposal for ${p.productName} rejected`, "HUMAN");
+    showToast("Proposal rejected — no order was created");
+    nav("proposals");
+  });
+  document.getElementById("btnApprove").addEventListener("click", ()=>openApprovalModal(id));
+}
+
+// ---------------- Approval confirmation modal ----------------
+function openApprovalModal(proposalId){
+  const p = proposals.find(x=>x.id===proposalId);
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+  <div class="overlay" id="ovConfirm">
+    <div class="modal fade-in-fast">
+      <div class="modal-head"><h3>Confirm Purchase</h3></div>
+      <div class="modal-body">
+        <div style="font-size:13px;color:var(--text-soft);margin-bottom:12px;">You are approving this purchase:</div>
+        <div class="confirm-line"><span class="k">Product</span><span class="v">${p.productName}</span></div>
+        <div class="confirm-line"><span class="k">Quantity</span><span class="v mono">${p.qty} ${p.unit}</span></div>
+        <div class="confirm-line"><span class="k">Supplier</span><span class="v">${p.supplier}</span></div>
+        <div class="confirm-line"><span class="k">Total</span><span class="v mono">${fmtMoney(p.total)}</span></div>
+        <div class="confirm-note">The AI recommended this purchase, but <strong>you</strong> are authorizing the payment. This action will initiate a RazorpayX supplier payout.</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" id="btnCancelConfirm">Cancel</button>
+        <button class="btn btn-approve" id="btnConfirmApprove">Confirm Approval</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById("btnCancelConfirm").addEventListener("click", closeModal);
+  document.getElementById("btnConfirmApprove").addEventListener("click", ()=>runApprovalPipeline(proposalId));
+}
+function closeModal(){ document.getElementById("modalRoot").innerHTML = ""; }
+
+function runApprovalPipeline(proposalId){
+  const p = proposals.find(x=>x.id===proposalId);
+  const modal = document.querySelector("#ovConfirm .modal");
+  modal.innerHTML = `
+    <div class="modal-head"><h3>Processing Approval</h3></div>
+    <div class="modal-body">
+      <div class="progress-steps" id="pSteps">
+        <div class="progress-step" data-s="0"><span class="mark"></span><span>Approval received</span></div>
+        <div class="progress-step" data-s="1"><span class="mark"></span><span>Creating supplier payout…</span></div>
+        <div class="progress-step" data-s="2"><span class="mark"></span><span>Payout initiated — waiting for Razorpay confirmation…</span></div>
+      </div>
+    </div>`;
+  const steps = modal.querySelectorAll(".progress-step");
+  let i = 0;
+  function mark(idx, cls){ steps[idx].classList.remove("active"); steps[idx].classList.add(cls); }
+  function tick(){
+    if(i>0) mark(i-1, "done");
+    if(i < steps.length){ steps[i].classList.add("active"); i++; setTimeout(tick, 700); }
+    else { finalizeApproval(proposalId); }
+  }
+  tick();
+}
+
+function finalizeApproval(proposalId){
+  const p = proposals.find(x=>x.id===proposalId);
+  p.status = "APPROVED_ORDERED";
+  const order = {
+    id: nextOrderId++, productId:p.productId, productName:p.productName, supplier:p.supplier,
+    qty:p.qty, unitPrice:p.unitPrice, amount:p.total, status:"APPROVED", time:"Just now",
+    payoutId: "pout_" + Math.random().toString(36).slice(2,11)
+  };
+  orders.unshift(order);
+  auditEvents.forEach(e=>{ if(e.proposalId===p.id) e.orderId = order.id; });
+  pushActivity(`Order #${order.id} approved`, "HUMAN");
+  addAudit(order.id, "HUMAN", "ORDER APPROVED", `Merchant approved purchase of ${order.qty} ${p.unit} from ${order.supplier}.`, null, {"Approved by":"Merchant"});
+  addAudit(order.id, "SYSTEM", "RAZORPAY PAYOUT CREATED", `Payout ID: ${order.payoutId}`, null, {"Payout ID":order.payoutId});
+
+  closeModal();
+  showToast("Payout initiated");
+  nav("orderDetail",{id:order.id});
+
+  setTimeout(()=>{
+    order.status = "PAID";
+    const prod = products.find(x=>x.id===order.productId);
+    const oldStock = prod.stock;
+    prod.stock = prod.stock + order.qty;
+    pushActivity(`Payment confirmed for Order #${order.id}`, "SYSTEM");
+    addAudit(order.id, "SYSTEM", "PAYOUT PROCESSED", "Razorpay confirmed the payout.", null, {});
+    addAudit(order.id, "SYSTEM", "INVENTORY UPDATED", `${prod.name}: ${oldStock} → ${prod.stock} ${prod.unit}`, null, {"Product ID":prod.id});
+    if(route.view==="orderDetail" && route.params.id===order.id){ nav("orderDetail",{id:order.id}); }
+    showToast(`Order #${order.id} — payment confirmed`);
+  }, 3200);
+}
+
+// ==========================================================================
+// VIEW: Orders list
+// ==========================================================================
+let orderFilter = "All";
+function viewOrders(){
+  const rows = orders.filter(o=> orderFilter==="All" || o.status===orderFilter.toUpperCase());
+  return `
+  <div class="page-header"><div><h1>Orders</h1><div class="page-sub">All procurement orders and their payment state.</div></div></div>
+  <div class="toolbar">
+    <select class="select-input" id="orderFilterSel">
+      ${["All","Proposed","Approved","Paid","Failed","Reversed"].map(f=>`<option ${orderFilter===f?"selected":""}>${f}</option>`).join("")}
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Order</th><th>Product</th><th>Supplier</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>
+        ${rows.map(o=>`
+          <tr class="clickable" data-order="${o.id}">
+            <td class="mono">#${o.id}</td>
+            <td class="cell-strong">${o.productName}</td>
+            <td>${o.supplier}</td>
+            <td class="mono">${fmtMoney(o.amount)}</td>
+            <td><span class="status-chip ${o.status.toLowerCase()}">${o.status}</span></td>
+          </tr>
+        `).join("") || `<tr><td colspan="5" style="text-align:center;color:var(--text-soft);padding:30px;">No orders in this state.</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+  `;
+}
+function bindOrders(){
+  document.getElementById("orderFilterSel").addEventListener("change",(e)=>{ orderFilter = e.target.value; nav("orders"); });
+  document.querySelectorAll("[data-order]").forEach(r=>r.addEventListener("click", ()=>nav("orderDetail",{id:parseInt(r.dataset.order)})));
+}
+
+// ==========================================================================
+// VIEW: Order detail / payment status
+// ==========================================================================
+function renderOrderTimelineHTML(orderId){
+  const events = auditEvents.filter(e=>e.orderId===orderId).slice().reverse(); // chronological order
+  if(!events.length) return `<div class="empty-state" style="padding:24px;"><div class="h">No audit events yet</div></div>`;
+  return `<div class="timeline">
+    ${events.map(ev=>`
+      <div class="tl-item actor-${ev.actor.toLowerCase()}">
+        <div class="rail"><span class="node"></span><span class="line"></span></div>
+        <div class="tl-content" data-ev="${ev.id}">
+          <div class="tl-top"><span class="actor-tag ${ev.actor.toLowerCase()}">${ev.actor}</span><span class="tl-time mono">${ev.time}</span></div>
+          <div class="tl-title">${ev.title}</div>
+          <div class="tl-desc">${ev.desc}</div>
+          ${ev.reasoning ? `<div class="tl-reason">${ev.reasoning}</div>` : ""}
+        </div>
+      </div>
+    `).join("")}
+  </div>`;
+}
+
+function viewOrderDetail(id){
+  const o = orders.find(x=>x.id===id);
+  if(!o) return `<div class="empty-state">Order not found.</div>`;
+
+  if(o.status === "FAILED"){
+    return `
+    <a class="back-link" id="backToOrders">${ICO.arrowLeft} Orders</a>
+    <div class="page-header"><div><h1>Payment Failed</h1></div></div>
+    <div class="doc"><div class="doc-body">
+      <div class="fail-banner">${ICO.alert}<div><div class="t">Supplier payment could not be completed.</div><div class="d">Inventory has not been updated.</div></div></div>
+      <div style="margin-top:20px;">
+        <div class="kv-row"><span class="k">Order</span><span class="v mono">#${o.id}</span></div>
+        <div class="kv-row"><span class="k">Product</span><span class="v">${o.productName}</span></div>
+        <div class="kv-row"><span class="k">Supplier</span><span class="v">${o.supplier}</span></div>
+        <div class="kv-row"><span class="k">Amount</span><span class="v mono">${fmtMoney(o.amount)}</span></div>
+        <div class="kv-row"><span class="k">Status</span><span class="status-chip failed">FAILED</span></div>
+      </div>
+      <div class="payout-id" style="margin-top:18px;"><div class="l">Razorpay response</div><div class="v">Payment could not be processed.</div></div>
+      <div class="action-row" style="justify-content:flex-start;">
+        <button class="btn btn-secondary" id="btnAltSupplier">Review Alternative Supplier</button>
+        <button class="btn btn-ghost" id="btnLeaveFailed">Leave Order Failed</button>
+      </div>
+      <div class="stitle" style="margin-top:28px;">Timeline</div>
+      ${renderOrderTimelineHTML(o.id)}
+    </div></div>`;
+  }
+
+  const steps = [
+    {label:"Human approved", done: true},
+    {label:"Payout created", done: true},
+    {label:"Payment confirmed", done: o.status==="PAID", waiting: o.status!=="PAID"},
+    {label:"Inventory updated", done: o.status==="PAID", waiting: o.status!=="PAID"},
+  ];
+  return `
+  <a class="back-link" id="backToOrders">${ICO.arrowLeft} Orders</a>
+  <div class="page-header"><div><h1>Order #${o.id}</h1></div></div>
+  <div class="doc"><div class="doc-body">
+    <div class="product-box" style="margin-bottom:22px;">
+      <div class="pmark">${ICO.box}</div>
+      <div><div class="pname">${o.productName}</div><div class="prow mono">${o.qty} units · ${o.supplier} · ${fmtMoney(o.amount)}</div></div>
+    </div>
+    <div class="stitle">Payment Status</div>
+    <div class="checklist">
+      ${steps.map(s=>`
+        <div class="check-row ${s.done?'done':'waiting'}">
+          <span class="mark">${s.done? ICO.check : ''}</span>
+          <span class="label">${s.waiting && !s.done ? "Waiting for Razorpay confirmation" : s.label}</span>
+        </div>
+      `).join("")}
+    </div>
+    <div class="payout-id"><div class="l">Razorpay Payout ID</div><div class="v">${o.payoutId || "—"}</div></div>
+    ${o.status!=="PAID" ? `<div class="confirm-note" style="margin-top:18px;">Payment is still awaiting confirmation. The payout was created, but Razorpay has not confirmed the final result yet.</div>` : ""}
+    <div class="stitle" style="margin-top:28px;">Timeline</div>
+    ${renderOrderTimelineHTML(o.id)}
+  </div></div>`;
+}
+function bindOrderDetail(id){
+  document.getElementById("backToOrders").addEventListener("click", ()=>nav("orders"));
+  const alt = document.getElementById("btnAltSupplier");
+  if(alt) alt.addEventListener("click", ()=>nav("altSupplier",{id}));
+  const leave = document.getElementById("btnLeaveFailed");
+  if(leave) leave.addEventListener("click", ()=>{ showToast("Order left as failed"); nav("orders"); });
+  document.querySelectorAll("[data-ev]").forEach(el=>el.addEventListener("click", ()=>openAuditDetail(parseInt(el.dataset.ev))));
+}
+
+// ---------------- Alternative supplier view ----------------
+function viewAltSupplier(orderId){
+  const o = orders.find(x=>x.id===orderId);
+  const p = products.find(x=>x.id===o.productId);
+  const original = p.suppliers.find(s=>s.name===o.supplier);
+  const alternatives = p.suppliers.filter(s=>s.name!==o.supplier);
+  return `
+  <a class="back-link" id="backToOrder">${ICO.arrowLeft} Order #${o.id}</a>
+  <div class="page-header"><div><h1>Alternative Supplier</h1></div></div>
+  <div class="doc"><div class="doc-body">
+    <div class="stitle">Original Supplier</div>
+    <div class="product-box" style="margin-bottom:20px;">
+      <div class="pmark">${ICO.truck}</div>
+      <div><div class="pname" style="font-size:16px;">${original.name}</div><div class="prow mono">₹${original.price}/unit · ${original.delivery} days</div></div>
+    </div>
+    <div class="fail-banner" style="margin-bottom:20px;">${ICO.alert}<div><div class="t">Payment failed.</div></div></div>
+    <div class="stitle">Other Available Suppliers</div>
+    ${alternatives.map(a=>`
+      <div class="supplier-pick" style="margin-bottom:12px;border-color:var(--line);background:var(--panel);">
+        <div class="head" style="color:var(--text);">${a.name}</div>
+        <div class="terms mono">₹${a.price}/unit · ${a.delivery} days</div>
+        <div class="action-row" style="margin-top:8px;"><button class="btn btn-secondary btn-sm" data-newprop="${p.id}">Create New Proposal</button></div>
+      </div>
+    `).join("")}
+  </div></div>`;
+}
+function bindAltSupplier(orderId){
+  document.getElementById("backToOrder").addEventListener("click", ()=>nav("orderDetail",{id:orderId}));
+  document.querySelectorAll("[data-newprop]").forEach(b=>b.addEventListener("click", ()=>{
+    generateProposalFlow(parseInt(b.dataset.newprop), document.getElementById("content"));
+  }));
+}
+
+// ==========================================================================
+// VIEW: Audit Log
+// ==========================================================================
+// ==========================================================================
+// VIEW: Spending
+// ==========================================================================
+function viewSpending(){
+  const dailyLimit = merchantPrefs.dailyLimit;
+  const dailySpend = 11400;
+  const remaining = Math.max(0, dailyLimit - dailySpend);
+  const pct = Math.min(100, Math.round((dailySpend/dailyLimit)*100));
+  const purchasesThisMonth = 131400;
+  const pendingAmount = orders.filter(o=>o.status==="PROPOSED"||o.status==="APPROVED").reduce((s,o)=>s+o.amount,0);
+  const failedCount = orders.filter(o=>o.status==="FAILED").length;
+
+  const bySupplier = {};
+  orders.filter(o=>o.status==="PAID"||o.status==="APPROVED").forEach(o=>{ bySupplier[o.supplier] = (bySupplier[o.supplier]||0) + o.amount; });
+  const supplierRows = Object.entries(bySupplier).sort((a,b)=>b[1]-a[1]);
+  const byProduct = {};
+  orders.filter(o=>o.status==="PAID"||o.status==="APPROVED").forEach(o=>{ byProduct[o.productName] = (byProduct[o.productName]||0) + o.amount; });
+  const productRows = Object.entries(byProduct).sort((a,b)=>b[1]-a[1]);
+  const maxVal = Math.max(1, ...productRows.map(r=>r[1]), ...supplierRows.map(r=>r[1]));
+
+  return `
+  <div class="page-header"><div><h1>Spending</h1><div class="page-sub">Where procurement money is going — deterministic totals, not AI estimates.</div></div></div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="top-row"><div class="label">Purchases this month</div><div class="sicon" style="background:var(--paper-alt);color:var(--text-soft);">${ICO.wallet}</div></div><div class="value">${fmtMoney(purchasesThisMonth)}</div></div>
+    <div class="stat-card accent-human"><div class="top-row"><div class="label">Pending payment</div><div class="sicon">${ICO.receipt}</div></div><div class="value">${fmtMoney(pendingAmount)}</div></div>
+    <div class="stat-card"><div class="top-row"><div class="label">Failed payments</div><div class="sicon" style="background:var(--danger-bg);color:var(--danger);">${ICO.alert}</div></div><div class="value">${failedCount}</div></div>
+    <div class="stat-card"><div class="top-row"><div class="label">Daily limit</div><div class="sicon" style="background:var(--paper-alt);color:var(--text-soft);">${ICO.sliders}</div></div><div class="value">${fmtMoney(dailyLimit)}</div></div>
+  </div>
+
+  <div class="section-label">Today's budget</div>
+  <div class="budget-card">
+    <div class="budget-row"><span class="bl">Spent today</span><span class="bv">${fmtMoney(dailySpend)}</span></div>
+    <div class="budget-bar-track"><div class="budget-bar-fill ${pct>80?'warn':''}" style="width:${pct}%;"></div></div>
+    <div class="budget-note">${fmtMoney(remaining)} remaining of your ${fmtMoney(dailyLimit)} daily limit &nbsp;·&nbsp; set in Settings</div>
+  </div>
+
+  <div class="section-label">Spend by product</div>
+  <div class="panel">
+    ${productRows.length ? productRows.map(([name,amt])=>`
+      <div class="spend-list-row">
+        <span class="sl-name">${name}</span>
+        <div class="sl-bar-track"><div class="sl-bar-fill" style="width:${Math.round((amt/maxVal)*100)}%;"></div></div>
+        <span class="sl-amt">${fmtMoney(amt)}</span>
+      </div>
+    `).join("") : `<div style="padding:20px;color:var(--text-faint);font-size:13px;">No purchases yet.</div>`}
+  </div>
+
+  <div class="section-label">Spend by supplier</div>
+  <div class="panel">
+    ${supplierRows.length ? supplierRows.map(([name,amt])=>`
+      <div class="spend-list-row">
+        <span class="sl-name">${name}</span>
+        <div class="sl-bar-track"><div class="sl-bar-fill" style="width:${Math.round((amt/maxVal)*100)}%;"></div></div>
+        <span class="sl-amt">${fmtMoney(amt)}</span>
+      </div>
+    `).join("") : `<div style="padding:20px;color:var(--text-faint);font-size:13px;">No purchases yet.</div>`}
+  </div>
+  `;
+}
+function bindSpending(){}
+
+// ==========================================================================
+// VIEW: Settings
+// ==========================================================================
+let merchantPrefs = { autoCheck:true, requireApproval:true, notify:false, dailyLimit:25000, connectedSource:"sample" };
+function viewSettings(){
+  const sourceNames = {shopify:"Shopify", square:"Square POS", csv:"Uploaded CSV", sample:"Sample data"};
+  return `
+  <div class="page-header"><div><h1>Settings</h1><div class="page-sub">Workspace, automation, and spending controls.</div></div></div>
+
+  <div class="settings-section">
+    <div class="stitle-lg">Business profile</div>
+    <div class="stitle-sub">Read-only in this demo.</div>
+    <div class="panel">
+      <div class="kv-row"><span class="k">Business name</span><span class="v">${merchantName}</span></div>
+      <div class="kv-row"><span class="k">Owner</span><span class="v">Meera Chandran</span></div>
+      <div class="kv-row"><span class="k">Email</span><span class="v">merchant@restockai.com</span></div>
+      <div class="kv-row"><span class="k">Connected data source</span><span class="v">${sourceNames[merchantPrefs.connectedSource] || "Not connected"}</span></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="stitle-lg">Automation</div>
+    <div class="stitle-sub">Controls how the agent behaves. Approval is never optional.</div>
+    <div class="panel">
+      <div class="settings-row">
+        <div><div class="sr-label">Automatic daily inventory check</div><div class="sr-desc">Scan stock levels every morning at 8:00 AM</div></div>
+        <button class="toggle ${merchantPrefs.autoCheck?'on':''}" data-mpref="autoCheck"><span class="knob"></span></button>
+      </div>
+      <div class="settings-row">
+        <div><div class="sr-label">Require approval for every order</div><div class="sr-desc">The agent can never spend without your sign-off</div></div>
+        <button class="toggle on" disabled style="opacity:.6;cursor:default;"><span class="knob"></span></button>
+      </div>
+      <div class="settings-row">
+        <div><div class="sr-label">Email me when a proposal is ready</div><div class="sr-desc">Get notified as soon as the agent finishes reasoning</div></div>
+        <button class="toggle ${merchantPrefs.notify?'on':''}" data-mpref="notify"><span class="knob"></span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="stitle-lg">Spending limit</div>
+    <div class="stitle-sub">The backend enforces this — the agent cannot propose past it.</div>
+    <div class="panel">
+      <div class="settings-row">
+        <div><div class="sr-label">Daily spending limit</div><div class="sr-desc">Maximum procurement spend allowed per day</div></div>
+        <input class="settings-input" id="dailyLimitInput" type="number" value="${merchantPrefs.dailyLimit}" step="500"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="stitle-lg">Account</div>
+    <div class="danger-zone">
+      <div style="font-weight:700;color:var(--danger);font-size:13.5px;margin-bottom:4px;">Log out of this workspace</div>
+      <div style="font-size:12.5px;color:#7a2c2c;margin-bottom:14px;">You'll need to sign in again to access ReStock AI.</div>
+      <button class="btn btn-danger btn-sm" id="btnSettingsLogout">${ICO.logout} Log out</button>
+    </div>
+  </div>
+  `;
+}
+function bindSettings(){
+  document.querySelectorAll("[data-mpref]").forEach(t=>t.addEventListener("click", ()=>{
+    merchantPrefs[t.dataset.mpref] = !merchantPrefs[t.dataset.mpref];
+    nav("settings");
+    showToast("Preference updated");
+  }));
+  const li = document.getElementById("dailyLimitInput");
+  if(li) li.addEventListener("change", (e)=>{
+    merchantPrefs.dailyLimit = Math.max(0, parseInt(e.target.value)||0);
+    showToast("Daily spending limit updated");
+  });
+  const lo = document.getElementById("btnSettingsLogout");
+  if(lo) lo.addEventListener("click", ()=>{ setScreen("login"); showToast("Signed out"); });
+}
+
+// ==========================================================================
+// VIEW: Activity (global operational feed + audit trail)
+// ==========================================================================
+function viewAudit(){
+  return `
+  <div class="page-header"><div><h1>Activity</h1><div class="page-sub">Every event across your business — agent reasoning, human decisions, system events.</div></div></div>
+  <div class="timeline">
+    ${auditEvents.map(ev=>`
+      <div class="tl-item actor-${ev.actor.toLowerCase()}">
+        <div class="rail"><span class="node"></span><span class="line"></span></div>
+        <div class="tl-content" data-ev="${ev.id}">
+          <div class="tl-top">
+            <span class="actor-tag ${ev.actor.toLowerCase()}">${ev.actor}</span>
+            <span class="tl-time mono">${ev.time}</span>
+            ${ev.orderId ? `<span class="tl-time mono">· Order #${ev.orderId}</span>` : ""}
+          </div>
+          <div class="tl-title">${ev.title}</div>
+          <div class="tl-desc">${ev.desc}</div>
+          ${ev.reasoning ? `<div class="tl-reason">${ev.reasoning}</div>` : ""}
+        </div>
+      </div>
+    `).join("")}
+  </div>`;
+}
+function bindAudit(){ document.querySelectorAll("[data-ev]").forEach(el=>el.addEventListener("click", ()=>openAuditDetail(parseInt(el.dataset.ev)))); }
+function openAuditDetail(evId){
+  const ev = auditEvents.find(x=>x.id===evId);
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `
+  <div class="overlay" id="ovAudit">
+    <div class="modal fade-in-fast" style="max-width:460px;">
+      <div class="modal-head"><h3>${ev.title}</h3></div>
+      <div class="modal-body">
+        <div class="kv-row"><span class="k">Actor</span><span class="actor-tag ${ev.actor.toLowerCase()}">${ev.actor}</span></div>
+        <div class="kv-row"><span class="k">Timestamp</span><span class="v mono">${ev.time}</span></div>
+        ${ev.orderId ? `<div class="kv-row"><span class="k">Related Order</span><span class="v mono">#${ev.orderId}</span></div>` : ""}
+        ${ev.reasoning ? `<div style="margin-top:14px;"><div class="why-label">Reasoning</div><div class="reason-box">${ev.reasoning}</div></div>` : ""}
+        ${Object.keys(ev.meta||{}).length ? `<div style="margin-top:16px;"><div class="why-label">Metadata</div>${Object.entries(ev.meta).map(([k,v])=>`<div class="kv-row"><span class="k">${k}</span><span class="v mono">${v}</span></div>`).join("")}</div>` : ""}
+      </div>
+      <div class="modal-foot"><button class="btn btn-secondary" id="btnCloseAudit">Close</button></div>
+    </div>
+  </div>`;
+  document.getElementById("btnCloseAudit").addEventListener("click", closeModal);
+}
+
+// ==========================================================================
+// Master render
+// ==========================================================================
+function render(){
+  renderNav();
+  const el = document.getElementById("content");
+  switch(route.view){
+    case "dashboard": el.innerHTML = viewDashboard(); bindDashboard(); break;
+    case "inventory": el.innerHTML = viewInventory(); bindInventory(); break;
+    case "productDetail": el.innerHTML = viewProductDetail(route.params.id); bindProductDetail(route.params.id); break;
+    case "proposals": el.innerHTML = viewProposals(); bindProposals(); break;
+    case "proposalDetail": el.innerHTML = viewProposalDetail(route.params.id); bindProposalDetail(route.params.id); break;
+    case "orders": el.innerHTML = viewOrders(); bindOrders(); break;
+    case "orderDetail": el.innerHTML = viewOrderDetail(route.params.id); bindOrderDetail(route.params.id); break;
+    case "altSupplier": el.innerHTML = viewAltSupplier(route.params.id); bindAltSupplier(route.params.id); break;
+    case "audit": el.innerHTML = viewAudit(); bindAudit(); break;
+    case "spending": el.innerHTML = viewSpending(); bindSpending(); break;
+    case "settings": el.innerHTML = viewSettings(); bindSettings(); break;
+    default: el.innerHTML = viewDashboard(); bindDashboard();
+  }
+  el.classList.remove("fade-in"); void el.offsetWidth; el.classList.add("fade-in");
+}
+
+mountStaticIcons();
+</script>
+</body>
+</html>

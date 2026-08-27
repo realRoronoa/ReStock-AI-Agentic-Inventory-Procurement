@@ -1,0 +1,98 @@
+# ReStock AI — local stack: backend + PostgreSQL.
+#
+# NOT VERIFIED — the Docker daemon was not running in the environment where this
+# was written, so this stack has never been started. The compose file parses
+# (`docker compose config`), but nothing beyond that has been exercised.
+#
+#   cp backend/.env.example backend/.env    # then fill in real values
+#   docker compose up --build
+#
+# The `migrate` service runs Alembic once and exits; `backend` waits for it to
+# finish successfully. Migrations are deliberately not part of the backend's own
+# start-up, so scaling to several replicas cannot have them racing each other.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: restock
+      POSTGRES_PASSWORD: restock
+      POSTGRES_DB: restock_ai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Exposed for local inspection with psql. Remove for anything shared.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restock -d restock_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: ./backend
+    command: ["alembic", "upgrade", "head"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://restock:restock@db:5432/restock_ai
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      # Secrets live here and are never baked into the image.
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://restock:restock@db:5432/restock_ai
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # One-off: load the demo dataset.
+  #   docker compose run --rm seed
+  seed:
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.seed.seed"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://restock:restock@db:5432/restock_ai
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles:
+      # Not started by `docker compose up`; must be invoked explicitly.
+      - tools
+    restart: "no"
+
+  # One-off: the scheduled low-stock sweep.
+  #   docker compose run --rm inventory-check
+  inventory-check:
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.jobs.inventory_check"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://restock:restock@db:5432/restock_ai
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles:
+      - tools
+    restart: "no"
+
+volumes:
+  postgres_data:

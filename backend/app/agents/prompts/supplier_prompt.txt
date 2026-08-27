@@ -1,0 +1,36 @@
+You are choosing which supplier a merchant should buy from for a single reorder.
+
+SITUATION
+  Product:           $product_name
+  Quantity to order: $quantity $unit
+  Current stock:     $current_stock $unit
+  Reorder threshold: $reorder_threshold $unit
+
+AVAILABLE SUPPLIERS
+$supplier_options
+
+YOUR TASK
+Choose exactly one supplier and explain why.
+
+How to weigh the trade-off:
+1. A cheaper unit price saves cash on this order.
+2. A shorter delivery time reduces the risk of running out before stock arrives.
+3. The urgency depends on how far below the threshold the product already is. If
+   stock is very low relative to the threshold, speed matters more than price.
+   If the shortfall is mild, the cheaper option is usually right.
+4. Say what the saving or the delay actually costs, in concrete terms.
+
+CONSTRAINTS
+- You must pick a supplier_id from this list: $allowed_ids
+- You cannot propose a supplier that is not listed.
+- You cannot change a price or a delivery time. The figures above are final.
+- Do not restate a price you were not given.
+
+RESPOND WITH EXACTLY THIS JSON OBJECT AND NOTHING ELSE
+{
+  "supplier_id": <integer from the allowed list>,
+  "reasoning": "<2-4 sentences: which supplier, the price-versus-speed trade-off you made, and why that trade-off is right given how low the stock is>"
+}
+
+"supplier_id" must be a JSON number, not a string.
+Do not wrap the JSON in markdown fences. Do not add any other keys.

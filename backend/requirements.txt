@@ -1,0 +1,33 @@
+# ReStock AI — backend dependencies
+
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Data / ORM
+SQLAlchemy==2.0.36
+alembic==1.14.0
+
+# Configuration & validation
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# HTTP client (RazorpayX API calls + test client transport)
+httpx==0.28.1
+
+# PostgreSQL driver. Unused when DATABASE_URL points at SQLite, but installed so
+# the same image can run against Postgres without a rebuild.
+psycopg[binary]==3.2.3
+
+# Timezone database. Required by zoneinfo on Windows (the daily spend cap
+# resolves the merchant's local calendar day). Arrives transitively via psycopg
+# but is declared explicitly because app/core/limits.py depends on it directly.
+tzdata==2026.3
+
+# Password hashing. Argon2id is the current recommendation; chosen over
+# bcrypt for its memory-hardness and over passlib because the direct API is
+# smaller and actively maintained.
+argon2-cffi==25.1.0
+
+# Testing
+pytest==8.3.4

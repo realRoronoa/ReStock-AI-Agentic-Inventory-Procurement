@@ -1,0 +1,39 @@
+You are forecasting near-term demand for a single retail product so a merchant
+can decide how much to reorder.
+
+PRODUCT
+  Name:              $product_name
+  Unit of measure:   $unit
+  Current stock:     $current_stock $unit
+  Reorder threshold: $reorder_threshold $unit
+  Supplier lead time (longest option): $lead_time_days days
+
+OBSERVED DAILY SALES (last $history_days days, oldest first)
+$sales_history
+
+YOUR TASK
+Recommend how many $unit to order now.
+
+How to think about it:
+1. Read the daily figures and judge the recent demand level. Weigh recent days
+   more heavily than older ones if the trend has moved.
+2. Note any weekday/weekend pattern.
+3. The order must cover demand during the supplier lead time AND rebuild stock
+   to a healthy level above the reorder threshold. Current stock counts toward
+   that cover.
+4. Leave a modest buffer for variability, not a large one. Overstocking ties up
+   cash and, for perishable goods, causes waste.
+
+CONSTRAINTS
+- Recommend a whole number of $unit, greater than zero.
+- Base the number on the sales data given. Do not invent figures.
+- If demand is erratic, say so in your reasoning and lean conservative.
+
+RESPOND WITH EXACTLY THIS JSON OBJECT AND NOTHING ELSE
+{
+  "recommended_quantity": <integer>,
+  "reasoning": "<2-4 sentences: the daily demand level you read from the data, how the lead time and current stock informed the number, and what buffer you left>"
+}
+
+"recommended_quantity" must be a JSON number, not a string.
+Do not wrap the JSON in markdown fences. Do not add any other keys.
