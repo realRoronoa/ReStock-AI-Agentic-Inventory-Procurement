@@ -183,6 +183,148 @@ class OpenAIJSONClient:
         return parsed
 
 
-def get_llm_client() -> LLMClient:
-    """The configured client. One production implementation only."""
-    return OpenAIJSONClient()
+class GeminiJSONClient:
+    """Gemini API client constrained to JSON output.
+
+    Uses `generationConfig.responseMimeType = "application/json"` with
+    the Generative Language REST API (`generateContent`).
+    """
+
+    def __init__(
+        self,
+        config: Settings | None = None,
+        *,
+        client: httpx.Client | None = None,
+    ) -> None:
+        self._config = config or default_settings
+        self.model = self._config.GEMINI_MODEL
+        # Injected only by tests, to mount a MockTransport.
+        self._client = client
+
+    def _ensure_configured(self) -> None:
+        if not self._config.GEMINI_API_KEY:
+            raise AgentNotConfigured(
+                "GEMINI_API_KEY is not set, so no recommendation can be generated."
+            )
+
+    def complete_json(self, *, system: str, user: str) -> dict[str, Any]:
+        self._ensure_configured()
+
+        assert_no_secrets(system, self._config.all_secrets)
+        assert_no_secrets(user, self._config.all_secrets)
+
+        url = f"{self._config.GEMINI_BASE_URL.rstrip('/')}/models/{self.model}:generateContent"
+        body = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": user}],
+                }
+            ],
+            "systemInstruction": {
+                "parts": [{"text": system}],
+            },
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.2,
+            },
+        }
+        headers = {
+            "x-goog-api-key": self._config.GEMINI_API_KEY,
+            "Content-Type": "application/json",
+        }
+
+        logger.info(
+            "llm_request provider=gemini model=%s key=%s system_chars=%d user_chars=%d",
+            self.model,
+            mask_secret(self._config.GEMINI_API_KEY, keep=7),
+            len(system),
+            len(user),
+        )
+
+        try:
+            response = self._post(url, body, headers)
+        except httpx.TimeoutException as exc:
+            raise AgentTransportError(
+                f"Model did not respond within {self._config.LLM_TIMEOUT_SECONDS:.0f}s."
+            ) from exc
+        except httpx.RequestError as exc:
+            raise AgentTransportError(
+                f"Could not reach the model provider ({type(exc).__name__})."
+            ) from exc
+
+        if response.status_code >= 400:
+            logger.error(
+                "llm_error provider=gemini http_status=%s", response.status_code
+            )
+            raise AgentTransportError(
+                f"Model provider returned HTTP {response.status_code}."
+            )
+
+        return self._parse(response)
+
+    def _post(
+        self, url: str, body: dict[str, Any], headers: dict[str, str]
+    ) -> httpx.Response:
+        timeout = self._config.LLM_TIMEOUT_SECONDS
+        if self._client is not None:
+            return self._client.post(url, json=body, headers=headers, timeout=timeout)
+        with httpx.Client(timeout=timeout) as client:
+            return client.post(url, json=body, headers=headers)
+
+    def _parse(self, response: httpx.Response) -> dict[str, Any]:
+        try:
+            envelope = response.json()
+            candidates = envelope.get("candidates")
+            if not candidates or not isinstance(candidates, list):
+                raise AgentMalformedOutputError(
+                    "Model response did not contain candidates."
+                )
+            content = candidates[0]["content"]["parts"][0]["text"]
+        except (ValueError, KeyError, IndexError, TypeError) as exc:
+            if isinstance(exc, AgentMalformedOutputError):
+                raise
+            raise AgentMalformedOutputError(
+                "Model response did not contain a message."
+            ) from exc
+
+        if not isinstance(content, str) or not content.strip():
+            raise AgentMalformedOutputError("Model returned an empty message.")
+
+        clean_content = content.strip()
+        if clean_content.startswith("```"):
+            lines = clean_content.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            clean_content = "\n".join(lines).strip()
+
+        try:
+            parsed = json.loads(clean_content)
+        except ValueError as exc:
+            logger.warning("llm_malformed_json content_prefix=%r", content[:200])
+            raise AgentMalformedOutputError(
+                "Model returned text that is not valid JSON."
+            ) from exc
+
+        if not isinstance(parsed, dict):
+            raise AgentMalformedOutputError(
+                f"Model returned JSON of type {type(parsed).__name__}, expected an object."
+            )
+
+        logger.info(
+            "llm_response provider=gemini model=%s keys=%s",
+            self.model,
+            sorted(parsed),
+        )
+        return parsed
+
+
+def get_llm_client(config: Settings | None = None) -> LLMClient:
+    """The configured client based on LLM_PROVIDER."""
+    cfg = config or default_settings
+    if cfg.LLM_PROVIDER == "gemini":
+        return GeminiJSONClient(cfg)
+    return OpenAIJSONClient(cfg)
+

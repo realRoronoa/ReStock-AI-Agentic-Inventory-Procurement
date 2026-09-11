@@ -12,6 +12,7 @@ import uuid
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -181,6 +182,19 @@ def create_app() -> FastAPI:
     )
 
     register_exception_handlers(app)
+
+    # CORS configuration
+    origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+    if not origins:
+        origins = ["*"]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True if origins != ["*"] else False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get(
         "/health",

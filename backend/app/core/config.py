@@ -37,22 +37,24 @@ class Settings(BaseSettings):
     APP_NAME: str = "ReStock AI"
     ENVIRONMENT: Literal["development", "test", "production"] = "development"
     LOG_LEVEL: str = "INFO"
+    PORT: int = 8000
+    ALLOWED_ORIGINS: str = "*"
 
     # --- Database ----------------------------------------------------------
     DATABASE_URL: str = f"sqlite:///{(BACKEND_DIR / DEFAULT_SQLITE_FILENAME).as_posix()}"
 
     # --- LLM provider ------------------------------------------------------
-    # Kept deliberately generic: the agents depend on a provider interface, not
-    # on OpenAI. Swapping providers should mean changing these values only.
-    # Only "openai" (or any OpenAI-compatible endpoint via OPENAI_BASE_URL) is
-    # implemented. There is deliberately no "fake" provider selectable at
-    # runtime: a stubbed recommendation in production would be indistinguishable
-    # from a real one in the audit trail. Fakes exist in the test suite only.
-    LLM_PROVIDER: Literal["openai"] = "openai"
+    # Kept deliberately generic: the agents depend on a provider interface.
+    # Supported providers: "openai" and "gemini".
+    LLM_PROVIDER: Literal["openai", "gemini"] = "openai"
     LLM_TIMEOUT_SECONDS: float = 30.0
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
 
     # --- RazorpayX ---------------------------------------------------------
     RAZORPAY_KEY_ID: str = ""
@@ -136,6 +138,8 @@ class Settings(BaseSettings):
 
     @property
     def llm_configured(self) -> bool:
+        if self.LLM_PROVIDER == "gemini":
+            return bool(self.GEMINI_API_KEY)
         return bool(self.OPENAI_API_KEY)
 
     @property
@@ -145,6 +149,7 @@ class Settings(BaseSettings):
             value
             for value in (
                 self.OPENAI_API_KEY,
+                self.GEMINI_API_KEY,
                 self.RAZORPAY_KEY_SECRET,
                 self.RAZORPAY_WEBHOOK_SECRET,
                 self.RAZORPAY_ACCOUNT_NUMBER,

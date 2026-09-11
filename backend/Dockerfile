@@ -47,4 +47,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 # Migrations are NOT run here. Running `alembic upgrade head` on container start
 # means every replica races to migrate on a scale-up. Run it as a one-off task
 # or an init container instead — see docker-compose.yml, which does exactly that.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
